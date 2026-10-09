@@ -2,7 +2,6 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"io"
 
@@ -12,9 +11,13 @@ import (
 // Exit codes. They are part of the contract with scripts and agents, and are
 // documented in the README.
 const (
-	exitOK    = 0
-	exitError = 1
-	exitUsage = 2
+	exitOK          = 0
+	exitError       = 1
+	exitUsage       = 2
+	exitAuth        = 3
+	exitForbidden   = 4
+	exitNotFound    = 5
+	exitUnreachable = 6
 )
 
 // usageError is a mistake in how the command was called, such as an unknown
@@ -28,12 +31,13 @@ type options struct {
 	json   bool
 	stdout io.Writer
 	stderr io.Writer
+	getenv func(string) string
 }
 
 // Execute runs the command line in args and returns the exit code. Data goes
-// to stdout and errors to stderr.
-func Execute(args []string, stdout, stderr io.Writer) int {
-	opts := &options{stdout: stdout, stderr: stderr}
+// to stdout and errors to stderr. getenv reads the configuration, as os.Getenv.
+func Execute(args []string, stdout, stderr io.Writer, getenv func(string) string) int {
+	opts := &options{stdout: stdout, stderr: stderr, getenv: getenv}
 	root := newRootCommand(opts)
 	root.SetArgs(args)
 	root.SetOut(stdout)
@@ -46,12 +50,11 @@ func Execute(args []string, stdout, stderr io.Writer) int {
 
 	fmt.Fprintf(stderr, "Error: %s\n", err)
 
-	var usage usageError
-	if errors.As(err, &usage) {
+	code := exitCode(err)
+	if code == exitUsage {
 		fmt.Fprintf(stderr, "Run 'lillamolnet --help' for usage.\n")
-		return exitUsage
 	}
-	return exitError
+	return code
 }
 
 func newRootCommand(opts *options) *cobra.Command {

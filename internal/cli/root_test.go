@@ -10,7 +10,7 @@ import (
 func run(t *testing.T, args ...string) (code int, stdout, stderr string) {
 	t.Helper()
 	var out, errOut bytes.Buffer
-	code = Execute(args, &out, &errOut)
+	code = Execute(args, &out, &errOut, func(string) string { return "" })
 	return code, out.String(), errOut.String()
 }
 

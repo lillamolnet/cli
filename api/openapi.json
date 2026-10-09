@@ -1,0 +1,458 @@
+{
+  "components": {
+    "responses": {
+      "errors": {
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/errors"
+            }
+          }
+        },
+        "description": "General Error"
+      }
+    },
+    "schemas": {
+      "app": {
+        "additionalProperties": false,
+        "description": "A \"Resource object\" representing a app",
+        "properties": {
+          "attributes": {
+            "additionalProperties": false,
+            "description": "An attributes object for a app",
+            "properties": {
+              "auto_deploy_branch": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              },
+              "auto_deploy_enabled": {
+                "description": "Field included by default.",
+                "type": "boolean"
+              },
+              "default_branch": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              },
+              "description": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              },
+              "inserted_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "name": {
+                "description": "Field included by default.",
+                "type": "string"
+              },
+              "repo_url": {
+                "description": "Field included by default.",
+                "type": "string"
+              },
+              "stopped_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "nullable": true,
+                "type": "string"
+              },
+              "stopped_by": {
+                "description": "Field included by default.",
+                "enum": [
+                  "user",
+                  "platform"
+                ],
+                "nullable": true,
+                "type": "string"
+              },
+              "subdomain": {
+                "description": "Field included by default.",
+                "type": "string"
+              },
+              "updated_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "subdomain",
+              "repo_url",
+              "auto_deploy_enabled",
+              "inserted_at",
+              "updated_at"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "links": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "relationships": {
+            "additionalProperties": false,
+            "description": "A relationships object for a app",
+            "properties": {},
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "error": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "An application-specific error code, expressed as a string value.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this occurrence of the problem.",
+            "type": "string"
+          },
+          "id": {
+            "description": "A unique identifier for this particular occurrence of the problem.",
+            "type": "string"
+          },
+          "links": {
+            "$ref": "#/components/schemas/links"
+          },
+          "source": {
+            "properties": {
+              "parameter": {
+                "description": "A string indicating which query parameter caused the error.",
+                "type": "string"
+              },
+              "pointer": {
+                "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific attribute].",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "status": {
+            "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem. It SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "errors": {
+        "items": {
+          "$ref": "#/components/schemas/error"
+        },
+        "type": "array",
+        "uniqueItems": true
+      },
+      "link": {
+        "description": "A link MUST be represented as either: a string containing the link's URL or a link object.",
+        "type": "string"
+      },
+      "links": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/link"
+        },
+        "type": "object"
+      },
+      "user": {
+        "additionalProperties": false,
+        "description": "A \"Resource object\" representing a user",
+        "properties": {
+          "attributes": {
+            "additionalProperties": false,
+            "description": "An attributes object for a user",
+            "properties": {
+              "email": {
+                "description": "Field included by default.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "email"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "links": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "relationships": {
+            "additionalProperties": false,
+            "description": "A relationships object for a user",
+            "properties": {},
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "description": "A personal API key, created in the dashboard. It starts with lillamolnet_.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "title": "Lilla Molnet API",
+    "version": "1"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/apps": {
+      "get": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Your apps, newest first.",
+        "parameters": [
+          {
+            "description": "Relationship paths to include in the response",
+            "explode": false,
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "pattern": "^()(,())*$",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "description": "Limits the response fields to only those listed for each type",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "additionalProperties": true,
+              "example": {
+                "app": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at"
+              },
+              "properties": {
+                "app": {
+                  "description": "Comma separated field names for app",
+                  "example": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "style": "deepObject"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "description": "An array of resource objects representing a app",
+                      "items": {
+                        "$ref": "#/components/schemas/app"
+                      },
+                      "type": "array",
+                      "uniqueItems": true
+                    },
+                    "included": {
+                      "items": {
+                        "oneOf": []
+                      },
+                      "type": "array",
+                      "uniqueItems": true
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "links": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "app"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "The user behind the API key. meta.api_key describes the key itself.",
+        "parameters": [
+          {
+            "description": "Relationship paths to include in the response",
+            "explode": false,
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "pattern": "^()(,())*$",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "description": "Limits the response fields to only those listed for each type",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "additionalProperties": true,
+              "example": {
+                "user": "email"
+              },
+              "properties": {
+                "user": {
+                  "description": "Comma separated field names for user",
+                  "example": "email",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "style": "deepObject"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/user"
+                    },
+                    "included": {
+                      "items": {
+                        "oneOf": []
+                      },
+                      "type": "array",
+                      "uniqueItems": true
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "links": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "api_key": {
+                          "description": "The API key used for this request.",
+                          "properties": {
+                            "expires_at": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "scopes": {
+                              "items": {
+                                "enum": [
+                                  "read",
+                                  "deploy",
+                                  "env:write",
+                                  "logs:read"
+                                ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "scopes",
+                            "expires_at"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "user"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "servers": [],
+  "tags": []
+}

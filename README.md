@@ -22,6 +22,15 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 
 Every command takes `--json`.
 
+## Configuration
+
+| Variable | Meaning |
+|---|---|
+| `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
+| `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. |
+
+A key has scopes. `read` is enough for the commands that exist today.
+
 ## Output
 
 Data goes to stdout, errors go to stderr. With `--json`, stdout is a single JSON
@@ -37,6 +46,10 @@ The CLI never asks interactive questions when stdin is not a terminal.
 | 0 | Success |
 | 1 | Unknown error |
 | 2 | Wrong usage, such as an unknown command or flag |
+| 3 | No API key, or the key is invalid, expired or revoked |
+| 4 | The key lacks the scope the command needs |
+| 5 | Not found |
+| 6 | The API could not be reached |
 
 ## Development
 
@@ -44,6 +57,9 @@ The CLI never asks interactive questions when stdin is not a terminal.
 go test ./...
 go run ./cmd/lillamolnet --help
 ```
+
+The tests check the test responses against `api/openapi.json`, a copy of the
+API's OpenAPI spec. Update it with `scripts/update-openapi.sh`.
 
 ## License
 
