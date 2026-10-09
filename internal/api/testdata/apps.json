@@ -1,0 +1,51 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "auto_deploy_branch": "main",
+        "auto_deploy_enabled": true,
+        "default_branch": "main",
+        "description": "Blog for the bakery",
+        "inserted_at": "2026-09-27T13:27:44Z",
+        "name": "Bakery",
+        "repo_url": "https://github.com/example/bakery",
+        "stopped_at": null,
+        "stopped_by": null,
+        "subdomain": "bakery",
+        "updated_at": "2026-10-01T08:00:00Z"
+      },
+      "id": "c4c0ea51-0000-4000-8000-000000000001",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "app"
+    },
+    {
+      "attributes": {
+        "auto_deploy_branch": null,
+        "auto_deploy_enabled": false,
+        "default_branch": null,
+        "description": null,
+        "inserted_at": "2026-09-01T10:00:00Z",
+        "name": "Old shop",
+        "repo_url": "https://github.com/example/shop",
+        "stopped_at": "2026-10-05T12:30:00Z",
+        "stopped_by": "user",
+        "subdomain": "old-shop",
+        "updated_at": "2026-10-05T12:30:00Z"
+      },
+      "id": "c4c0ea51-0000-4000-8000-000000000002",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "app"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "links": {
+    "self": "https://lillamolnet.se/api/v1/apps"
+  },
+  "meta": {}
+}

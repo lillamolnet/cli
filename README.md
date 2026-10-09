@@ -20,6 +20,7 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 |---|---|
 | `lillamolnet version` | Prints the version |
 | `lillamolnet whoami` | Shows the user and the API key in use, with its scopes and expiry |
+| `lillamolnet apps` | Lists your apps, newest first |
 
 Every command takes `--json`.
 
@@ -30,7 +31,7 @@ Every command takes `--json`.
 | `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
 | `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. |
 
-A key has scopes. `read` is enough for the commands that exist today.
+A key has scopes. `read` is enough for `whoami` and `apps`.
 
 ## Output
 
@@ -54,6 +55,29 @@ The CLI never asks interactive questions when stdin is not a terminal.
     "expires_at": "2027-01-07T20:10:44Z"
   }
 }
+```
+
+`apps --json` is an array, newest first. `stopped` is the state you asked for,
+not whether the container runs right now. `stopped_by` is `user` or `platform`.
+
+```json
+[
+  {
+    "id": "c4c0ea51-0000-4000-8000-000000000002",
+    "name": "Old shop",
+    "subdomain": "old-shop",
+    "description": null,
+    "repo_url": "https://github.com/example/shop",
+    "default_branch": null,
+    "auto_deploy_enabled": false,
+    "auto_deploy_branch": null,
+    "stopped": true,
+    "stopped_at": "2026-10-05T12:30:00Z",
+    "stopped_by": "user",
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-10-05T12:30:00Z"
+  }
+]
 ```
 
 ## Exit codes
