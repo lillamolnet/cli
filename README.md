@@ -19,6 +19,7 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 | Command | What it does |
 |---|---|
 | `lillamolnet version` | Prints the version |
+| `lillamolnet whoami` | Shows the user and the API key in use, with its scopes and expiry |
 
 Every command takes `--json`.
 
@@ -38,6 +39,22 @@ value. The JSON format is a stable contract: fields may be added, but are not
 removed or changed. The tables in normal output may change at any time.
 
 The CLI never asks interactive questions when stdin is not a terminal.
+
+### JSON formats
+
+`whoami --json`:
+
+```json
+{
+  "id": "2e3dd1de-6ec3-4aec-8c17-21a3d96ad63b",
+  "email": "ada@example.com",
+  "api_key": {
+    "name": "laptop",
+    "scopes": ["read", "deploy"],
+    "expires_at": "2027-01-07T20:10:44Z"
+  }
+}
+```
 
 ## Exit codes
 

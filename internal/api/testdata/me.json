@@ -1,0 +1,28 @@
+{
+  "data": {
+    "attributes": {
+      "email": "ada@example.com"
+    },
+    "id": "2e3dd1de-6ec3-4aec-8c17-21a3d96ad63b",
+    "links": {},
+    "meta": {},
+    "relationships": {},
+    "type": "user"
+  },
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "links": {
+    "self": "https://lillamolnet.se/api/v1/me"
+  },
+  "meta": {
+    "api_key": {
+      "expires_at": "2027-01-07T20:10:44Z",
+      "name": "laptop",
+      "scopes": [
+        "read",
+        "deploy"
+      ]
+    }
+  }
+}

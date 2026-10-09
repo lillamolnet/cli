@@ -83,5 +83,6 @@ func newRootCommand(opts *options) *cobra.Command {
 	root.CompletionOptions.HiddenDefaultCmd = true
 
 	root.AddCommand(newVersionCommand(opts))
+	root.AddCommand(newWhoamiCommand(opts))
 	return root
 }
