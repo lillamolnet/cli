@@ -90,39 +90,59 @@ type errorDocument struct {
 	} `json:"errors"`
 }
 
+// Response size limits. Build logs can be several MB.
+const (
+	maxDocumentSize = 10 << 20
+	maxTextSize     = 100 << 20
+)
+
 // get fetches path, relative to /api/v1, with the query, and decodes the
 // document into out. JoinPath escapes the path elements.
 func (c *Client) get(ctx context.Context, path []string, query url.Values, out any) error {
-	u := c.baseURL.JoinPath(append([]string{"api", "v1"}, path...)...)
-	u.RawQuery = query.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	body, err := c.fetch(ctx, path, query, mediaType, maxDocumentSize)
 	if err != nil {
 		return err
-	}
-	req.Header.Set("Accept", mediaType)
-	req.Header.Set("Authorization", "Bearer "+c.token)
-	req.Header.Set("User-Agent", c.userAgent)
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return &ConnectionError{Err: err}
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 10<<20))
-	if err != nil {
-		return &ConnectionError{Err: err}
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return decodeError(resp.StatusCode, body)
 	}
 
 	if err := json.Unmarshal(body, out); err != nil {
 		return fmt.Errorf("unexpected response from the API: %w", err)
 	}
 	return nil
+}
+
+// getText fetches path as plain text.
+func (c *Client) getText(ctx context.Context, path []string) (string, error) {
+	body, err := c.fetch(ctx, path, nil, "text/plain", maxTextSize)
+	return string(body), err
+}
+
+func (c *Client) fetch(ctx context.Context, path []string, query url.Values, accept string, limit int64) ([]byte, error) {
+	u := c.baseURL.JoinPath(append([]string{"api", "v1"}, path...)...)
+	u.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", accept)
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("User-Agent", c.userAgent)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, &ConnectionError{Err: err}
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, limit))
+	if err != nil {
+		return nil, &ConnectionError{Err: err}
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, decodeError(resp.StatusCode, body)
+	}
+	return body, nil
 }
 
 func decodeError(status int, body []byte) error {

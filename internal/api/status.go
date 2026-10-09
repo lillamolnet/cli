@@ -143,29 +143,6 @@ func (c *Client) AppStatus(ctx context.Context, id string) (AppStatus, error) {
 	return status, nil
 }
 
-func decodeBuild(included map[identifier]includedResource, ref identifier) (*Build, error) {
-	r, ok := included[ref]
-	if !ok {
-		return nil, fmt.Errorf("unexpected response from the API: %s %s is not included", ref.Type, ref.ID)
-	}
-
-	var a buildAttributes
-	if err := json.Unmarshal(r.Attributes, &a); err != nil {
-		return nil, fmt.Errorf("unexpected response from the API: %w", err)
-	}
-
-	return &Build{
-		ID:          r.ID,
-		Status:      a.Status,
-		Branch:      deref(a.Branch),
-		Commit:      deref(a.RepoCommit),
-		Trigger:     deref(a.TriggerType),
-		ErrorReason: deref(a.ErrorReason),
-		StartedAt:   a.StartedAt.Time,
-		FinishedAt:  timePtr(a.FinishedAt),
-	}, nil
-}
-
 func timePtr(t *apiTime) *time.Time {
 	if t == nil {
 		return nil

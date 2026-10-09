@@ -96,5 +96,7 @@ func newRootCommand(opts *options) *cobra.Command {
 	root.AddCommand(newWhoamiCommand(opts))
 	root.AddCommand(newAppsCommand(opts))
 	root.AddCommand(newStatusCommand(opts))
+	root.AddCommand(newBuildsCommand(opts))
+	root.AddCommand(newBuildLogsCommand(opts))
 	return root
 }

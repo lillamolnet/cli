@@ -1,0 +1,25 @@
+{
+  "data": {
+    "attributes": {
+      "branch": "main",
+      "error_reason": "mix compile failed",
+      "finished_at": "2026-10-02T10:01:00Z",
+      "repo_commit": "def5678abc",
+      "started_at": "2026-10-02T10:00:00Z",
+      "status": "failed",
+      "trigger_type": "manual"
+    },
+    "id": "f712304f-d4c6-4c1d-be59-40a3cb90920d",
+    "links": {},
+    "meta": {},
+    "relationships": {},
+    "type": "build"
+  },
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "links": {
+    "self": "https://lillamolnet.se/api/v1/builds/f712304f-d4c6-4c1d-be59-40a3cb90920d"
+  },
+  "meta": {}
+}

@@ -1,0 +1,51 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "branch": "main",
+        "error_reason": "mix compile failed",
+        "finished_at": "2026-10-02T10:01:00Z",
+        "repo_commit": "def5678abc",
+        "started_at": "2026-10-02T10:00:00Z",
+        "status": "failed",
+        "trigger_type": "manual"
+      },
+      "id": "f712304f-d4c6-4c1d-be59-40a3cb90920d",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "build"
+    },
+    {
+      "attributes": {
+        "branch": "main",
+        "error_reason": null,
+        "finished_at": "2026-10-01T10:03:00Z",
+        "repo_commit": "abc1234def",
+        "started_at": "2026-10-01T10:00:00Z",
+        "status": "success",
+        "trigger_type": "webhook"
+      },
+      "id": "556cad24-fb5f-4ece-903c-3c534f7126d5",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "build"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "links": {
+    "first": "https://lillamolnet.se/api/v1/apps/fdf37127-5906-4c4c-9005-4da8cf355adb/builds?page[limit]=20",
+    "next": null,
+    "prev": null,
+    "self": "https://lillamolnet.se/api/v1/apps/fdf37127-5906-4c4c-9005-4da8cf355adb/builds?page[limit]=20"
+  },
+  "meta": {
+    "page": {
+      "limit": 20,
+      "offset": 0
+    }
+  }
+}

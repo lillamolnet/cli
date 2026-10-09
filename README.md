@@ -22,6 +22,8 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 | `lillamolnet whoami` | Shows the user and the API key in use, with its scopes and expiry |
 | `lillamolnet apps` | Lists your apps, newest first |
 | `lillamolnet status <app>` | Shows an app with its latest build and latest deploy. `<app>` is the subdomain, id or name |
+| `lillamolnet builds <app>` | Lists an app's builds, newest first. `--limit` sets how many, at most 100 |
+| `lillamolnet build-logs <build>` | Prints a build's log. `<build>` is a build id, from `builds` or `status` |
 
 Every command takes `--json`.
 
@@ -32,7 +34,7 @@ Every command takes `--json`.
 | `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
 | `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. |
 
-A key has scopes. `read` is enough for `whoami`, `apps` and `status`.
+A key has scopes. `read` is enough for all the commands that exist today.
 
 ## Output
 
@@ -110,6 +112,12 @@ an app that has never been built.
   }
 }
 ```
+
+`builds --json` is an array of builds, in the same format as `latest_build` in
+`status --json`, newest first.
+
+`build-logs --json` is `{"id": "<build id>", "log": "<the log>"}`. Without
+`--json`, the log is printed as it is.
 
 ## Exit codes
 

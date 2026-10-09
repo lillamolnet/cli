@@ -53,12 +53,7 @@ func newStatusCommand(opts *options) *cobra.Command {
 		Long: "Show an app with its latest build and its latest deploy.\n\n" +
 			"<app> is the app's subdomain, id or name. The latest deploy can belong to an\n" +
 			"older build than the latest, for example when the latest build failed.",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return usageError{fmt.Errorf("%s needs exactly one app, got %d", cmd.CommandPath(), len(args))}
-			}
-			return nil
-		},
+		Args: exactlyOne("app"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := opts.client()
 			if err != nil {
