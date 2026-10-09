@@ -44,6 +44,7 @@ func (o *options) client() (*api.Client, error) {
 func exitCode(err error) int {
 	var usage usageError
 	var auth authError
+	var notFound notFoundError
 	var conn *api.ConnectionError
 
 	switch {
@@ -53,7 +54,7 @@ func exitCode(err error) int {
 		return exitAuth
 	case api.IsStatus(err, http.StatusForbidden):
 		return exitForbidden
-	case api.IsStatus(err, http.StatusNotFound):
+	case errors.As(err, &notFound), api.IsStatus(err, http.StatusNotFound):
 		return exitNotFound
 	case errors.As(err, &conn):
 		return exitUnreachable

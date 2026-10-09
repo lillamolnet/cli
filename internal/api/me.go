@@ -34,7 +34,7 @@ type meMeta struct {
 // Me returns the user behind the API key, and the key itself.
 func (c *Client) Me(ctx context.Context) (User, error) {
 	var doc document[resource[userAttributes], meMeta]
-	if err := c.get(ctx, "me", &doc); err != nil {
+	if err := c.get(ctx, []string{"me"}, nil, &doc); err != nil {
 		return User{}, err
 	}
 

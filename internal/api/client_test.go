@@ -32,7 +32,7 @@ func TestRequestHeaders(t *testing.T) {
 	client, req := server(t, 200, `{"data": []}`)
 
 	var out document[[]resource[map[string]any], map[string]any]
-	if err := client.get(context.Background(), "apps", &out); err != nil {
+	if err := client.get(context.Background(), []string{"apps"}, nil, &out); err != nil {
 		t.Fatal(err)
 	}
 
@@ -68,7 +68,7 @@ func TestErrorResponses(t *testing.T) {
 		client, _ := server(t, tc.status, tc.body)
 
 		var out document[[]resource[map[string]any], map[string]any]
-		err := client.get(context.Background(), "apps", &out)
+		err := client.get(context.Background(), []string{"apps"}, nil, &out)
 
 		var apiErr *Error
 		if !errors.As(err, &apiErr) {
@@ -94,7 +94,7 @@ func TestConnectionError(t *testing.T) {
 	}
 
 	var out document[[]resource[map[string]any], map[string]any]
-	err = client.get(context.Background(), "apps", &out)
+	err = client.get(context.Background(), []string{"apps"}, nil, &out)
 
 	var connErr *ConnectionError
 	if !errors.As(err, &connErr) {

@@ -12,7 +12,8 @@
         "stopped_at": null,
         "stopped_by": null,
         "subdomain": "bakery",
-        "updated_at": "2026-10-01T08:00:00Z"
+        "updated_at": "2026-10-01T08:00:00Z",
+        "url": "https://bakery.lillamolnet.se"
       },
       "id": "c4c0ea51-0000-4000-8000-000000000001",
       "links": {},
@@ -32,7 +33,8 @@
         "stopped_at": "2026-10-05T12:30:00Z",
         "stopped_by": "user",
         "subdomain": "old-shop",
-        "updated_at": "2026-10-05T12:30:00Z"
+        "updated_at": "2026-10-05T12:30:00Z",
+        "url": "https://old-shop.lillamolnet.se"
       },
       "id": "c4c0ea51-0000-4000-8000-000000000002",
       "links": {},

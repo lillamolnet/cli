@@ -90,9 +90,11 @@ type errorDocument struct {
 	} `json:"errors"`
 }
 
-// get fetches path, relative to /api/v1, and decodes the document into out.
-func (c *Client) get(ctx context.Context, path string, out any) error {
-	u := c.baseURL.JoinPath("api", "v1", path)
+// get fetches path, relative to /api/v1, with the query, and decodes the
+// document into out. JoinPath escapes the path elements.
+func (c *Client) get(ctx context.Context, path []string, query url.Values, out any) error {
+	u := c.baseURL.JoinPath(append([]string{"api", "v1"}, path...)...)
+	u.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {

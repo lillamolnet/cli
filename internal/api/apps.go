@@ -11,6 +11,7 @@ type App struct {
 	ID                string
 	Name              string
 	Subdomain         string
+	URL               string
 	Description       string
 	RepoURL           string
 	DefaultBranch     string
@@ -28,6 +29,7 @@ type App struct {
 type appAttributes struct {
 	Name              string   `json:"name"`
 	Subdomain         string   `json:"subdomain"`
+	URL               string   `json:"url"`
 	Description       *string  `json:"description"`
 	RepoURL           string   `json:"repo_url"`
 	DefaultBranch     *string  `json:"default_branch"`
@@ -42,33 +44,38 @@ type appAttributes struct {
 // Apps returns the user's apps, newest first.
 func (c *Client) Apps(ctx context.Context) ([]App, error) {
 	var doc document[[]resource[appAttributes], struct{}]
-	if err := c.get(ctx, "apps", &doc); err != nil {
+	if err := c.get(ctx, []string{"apps"}, nil, &doc); err != nil {
 		return nil, err
 	}
 
 	apps := make([]App, 0, len(doc.Data))
 	for _, r := range doc.Data {
-		a := r.Attributes
-		app := App{
-			ID:                r.ID,
-			Name:              a.Name,
-			Subdomain:         a.Subdomain,
-			Description:       deref(a.Description),
-			RepoURL:           a.RepoURL,
-			DefaultBranch:     deref(a.DefaultBranch),
-			AutoDeployEnabled: a.AutoDeployEnabled,
-			AutoDeployBranch:  deref(a.AutoDeployBranch),
-			StoppedBy:         deref(a.StoppedBy),
-			InsertedAt:        a.InsertedAt.Time,
-			UpdatedAt:         a.UpdatedAt.Time,
-		}
-		if a.StoppedAt != nil {
-			stopped := a.StoppedAt.Time
-			app.StoppedAt = &stopped
-		}
-		apps = append(apps, app)
+		apps = append(apps, toApp(r))
 	}
 	return apps, nil
+}
+
+func toApp(r resource[appAttributes]) App {
+	a := r.Attributes
+	app := App{
+		ID:                r.ID,
+		Name:              a.Name,
+		Subdomain:         a.Subdomain,
+		URL:               a.URL,
+		Description:       deref(a.Description),
+		RepoURL:           a.RepoURL,
+		DefaultBranch:     deref(a.DefaultBranch),
+		AutoDeployEnabled: a.AutoDeployEnabled,
+		AutoDeployBranch:  deref(a.AutoDeployBranch),
+		StoppedBy:         deref(a.StoppedBy),
+		InsertedAt:        a.InsertedAt.Time,
+		UpdatedAt:         a.UpdatedAt.Time,
+	}
+	if a.StoppedAt != nil {
+		stopped := a.StoppedAt.Time
+		app.StoppedAt = &stopped
+	}
+	return app
 }
 
 func deref(s *string) string {

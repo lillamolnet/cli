@@ -95,5 +95,6 @@ func newRootCommand(opts *options) *cobra.Command {
 	root.AddCommand(newVersionCommand(opts))
 	root.AddCommand(newWhoamiCommand(opts))
 	root.AddCommand(newAppsCommand(opts))
+	root.AddCommand(newStatusCommand(opts))
 	return root
 }

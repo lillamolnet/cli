@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "auto_deploy_branch": "main",
+        "auto_deploy_enabled": true,
+        "default_branch": "main",
+        "description": null,
+        "inserted_at": "2026-10-09T21:33:03Z",
+        "name": "Bakery",
+        "repo_url": "https://github.com/example/bakery",
+        "stopped_at": null,
+        "stopped_by": null,
+        "subdomain": "bakery",
+        "updated_at": "2026-10-09T21:33:03Z",
+        "url": "https://bakery.lillamolnet.se"
+      },
+      "id": "fdf37127-5906-4c4c-9005-4da8cf355adb",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "app"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "links": {
+    "self": "https://lillamolnet.se/api/v1/apps"
+  },
+  "meta": {}
+}

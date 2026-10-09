@@ -50,6 +50,7 @@ func TestAppsJSON(t *testing.T) {
 		"id":                  "c4c0ea51-0000-4000-8000-000000000002",
 		"name":                "Old shop",
 		"subdomain":           "old-shop",
+		"url":                 "https://old-shop.lillamolnet.se",
 		"description":         nil,
 		"repo_url":            "https://github.com/example/shop",
 		"default_branch":      nil,

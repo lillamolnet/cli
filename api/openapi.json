@@ -76,6 +76,11 @@
                 "description": "Field included by default.",
                 "format": "date-time",
                 "type": "string"
+              },
+              "url": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
               }
             },
             "required": [
@@ -102,7 +107,226 @@
           "relationships": {
             "additionalProperties": false,
             "description": "A relationships object for a app",
+            "properties": {
+              "latest_build": {
+                "properties": {
+                  "data": {
+                    "additionalProperties": false,
+                    "description": "An identifier for latest_build",
+                    "nullable": true,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "meta": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id"
+                    ],
+                    "type": "object"
+                  }
+                }
+              },
+              "latest_deploy": {
+                "properties": {
+                  "data": {
+                    "additionalProperties": false,
+                    "description": "An identifier for latest_deploy",
+                    "nullable": true,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "meta": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "build": {
+        "additionalProperties": false,
+        "description": "A \"Resource object\" representing a build",
+        "properties": {
+          "attributes": {
+            "additionalProperties": false,
+            "description": "An attributes object for a build",
+            "properties": {
+              "branch": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              },
+              "error_reason": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              },
+              "finished_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "nullable": true,
+                "type": "string"
+              },
+              "repo_commit": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              },
+              "started_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "status": {
+                "description": "Field included by default.",
+                "type": "string"
+              },
+              "trigger_type": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "started_at"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "links": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "relationships": {
+            "additionalProperties": false,
+            "description": "A relationships object for a build",
             "properties": {},
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "deploy": {
+        "additionalProperties": false,
+        "description": "A \"Resource object\" representing a deploy",
+        "properties": {
+          "attributes": {
+            "additionalProperties": false,
+            "description": "An attributes object for a deploy",
+            "properties": {
+              "error_reason": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              },
+              "finished_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "nullable": true,
+                "type": "string"
+              },
+              "started_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "status": {
+                "description": "Field included by default.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "started_at"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "links": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "relationships": {
+            "additionalProperties": false,
+            "description": "A relationships object for a deploy",
+            "properties": {
+              "build": {
+                "properties": {
+                  "data": {
+                    "additionalProperties": false,
+                    "description": "An identifier for build",
+                    "nullable": true,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "meta": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            },
             "type": "object"
           },
           "type": {
@@ -247,7 +471,7 @@
             "name": "include",
             "required": false,
             "schema": {
-              "pattern": "^()(,())*$",
+              "pattern": "^(latest_build|latest_deploy|latest_deploy.build)(,(latest_build|latest_deploy|latest_deploy.build))*$",
               "type": "string"
             },
             "style": "form"
@@ -260,12 +484,12 @@
             "schema": {
               "additionalProperties": true,
               "example": {
-                "app": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at"
+                "app": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url"
               },
               "properties": {
                 "app": {
                   "description": "Comma separated field names for app",
-                  "example": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at",
+                  "example": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url",
                   "type": "string"
                 }
               },
@@ -291,7 +515,14 @@
                     },
                     "included": {
                       "items": {
-                        "oneOf": []
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/build"
+                          },
+                          {
+                            "$ref": "#/components/schemas/deploy"
+                          }
+                        ]
                       },
                       "type": "array",
                       "uniqueItems": true
@@ -314,6 +545,110 @@
                     }
                   },
                   "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "app"
+        ]
+      }
+    },
+    "/api/v1/apps/{id}": {
+      "get": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "One of your apps. Include latest_build, latest_deploy and latest_deploy.build for its status.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "description": "Relationship paths to include in the response",
+            "explode": false,
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "pattern": "^(latest_build|latest_deploy|latest_deploy.build)(,(latest_build|latest_deploy|latest_deploy.build))*$",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "description": "Limits the response fields to only those listed for each type",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "additionalProperties": true,
+              "example": {
+                "app": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url"
+              },
+              "properties": {
+                "app": {
+                  "description": "Comma separated field names for app",
+                  "example": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "style": "deepObject"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/app"
+                    },
+                    "included": {
+                      "items": {
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/build"
+                          },
+                          {
+                            "$ref": "#/components/schemas/deploy"
+                          }
+                        ]
+                      },
+                      "type": "array",
+                      "uniqueItems": true
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "links": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    }
+                  }
                 }
               }
             },

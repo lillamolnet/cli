@@ -15,6 +15,7 @@ type appJSON struct {
 	ID                string     `json:"id"`
 	Name              string     `json:"name"`
 	Subdomain         string     `json:"subdomain"`
+	URL               *string    `json:"url"`
 	Description       *string    `json:"description"`
 	RepoURL           string     `json:"repo_url"`
 	DefaultBranch     *string    `json:"default_branch"`
@@ -75,6 +76,7 @@ func toAppJSON(app api.App) appJSON {
 		ID:                app.ID,
 		Name:              app.Name,
 		Subdomain:         app.Subdomain,
+		URL:               optional(app.URL),
 		Description:       optional(app.Description),
 		RepoURL:           app.RepoURL,
 		DefaultBranch:     optional(app.DefaultBranch),

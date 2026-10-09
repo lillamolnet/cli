@@ -7,7 +7,9 @@ import (
 )
 
 func TestAppsFixtureFollowsSpec(t *testing.T) {
-	assertFollowsSpec(t, "/api/v1/apps", readFixture(t, "apps.json"))
+	for _, fixture := range []string{"apps.json", "apps_for_status.json"} {
+		assertFollowsSpec(t, "/api/v1/apps", readFixture(t, fixture))
+	}
 }
 
 func TestApps(t *testing.T) {

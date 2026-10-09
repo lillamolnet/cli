@@ -21,6 +21,7 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 | `lillamolnet version` | Prints the version |
 | `lillamolnet whoami` | Shows the user and the API key in use, with its scopes and expiry |
 | `lillamolnet apps` | Lists your apps, newest first |
+| `lillamolnet status <app>` | Shows an app with its latest build and latest deploy. `<app>` is the subdomain, id or name |
 
 Every command takes `--json`.
 
@@ -31,7 +32,7 @@ Every command takes `--json`.
 | `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
 | `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. |
 
-A key has scopes. `read` is enough for `whoami` and `apps`.
+A key has scopes. `read` is enough for `whoami`, `apps` and `status`.
 
 ## Output
 
@@ -66,6 +67,7 @@ not whether the container runs right now. `stopped_by` is `user` or `platform`.
     "id": "c4c0ea51-0000-4000-8000-000000000002",
     "name": "Old shop",
     "subdomain": "old-shop",
+    "url": "https://old-shop.lillamolnet.se",
     "description": null,
     "repo_url": "https://github.com/example/shop",
     "default_branch": null,
@@ -80,6 +82,35 @@ not whether the container runs right now. `stopped_by` is `user` or `platform`.
 ]
 ```
 
+`status --json` has the app, in the same format as `apps --json`, its latest
+build and its latest deploy. The latest deploy can belong to an older build
+than the latest, for example when the latest build failed. Both are `null` for
+an app that has never been built.
+
+```json
+{
+  "app": { "id": "fdf37127-5906-4c4c-9005-4da8cf355adb", "name": "Bakery", "subdomain": "bakery", "...": "..." },
+  "latest_build": {
+    "id": "f712304f-d4c6-4c1d-be59-40a3cb90920d",
+    "status": "failed",
+    "branch": "main",
+    "commit": "def5678abc",
+    "trigger": "manual",
+    "error_reason": "mix compile failed",
+    "started_at": "2026-10-02T10:00:00Z",
+    "finished_at": "2026-10-02T10:01:00Z"
+  },
+  "latest_deploy": {
+    "id": "c1135c59-4ac0-4879-8343-849bdc008eac",
+    "status": "deployed",
+    "error_reason": null,
+    "started_at": "2026-10-01T10:03:10Z",
+    "finished_at": "2026-10-01T10:03:40Z",
+    "build": { "id": "556cad24-fb5f-4ece-903c-3c534f7126d5", "status": "success", "commit": "abc1234def", "...": "..." }
+  }
+}
+```
+
 ## Exit codes
 
 | Code | Meaning |
@@ -89,7 +120,7 @@ not whether the container runs right now. `stopped_by` is `user` or `platform`.
 | 2 | Wrong usage, such as an unknown command or flag |
 | 3 | No API key, or the key is invalid, expired or revoked |
 | 4 | The key lacks the scope the command needs |
-| 5 | Not found |
+| 5 | Not found, such as an unknown app |
 | 6 | The API could not be reached |
 
 ## Development
