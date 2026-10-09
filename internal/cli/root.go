@@ -27,6 +27,10 @@ type usageError struct{ err error }
 func (e usageError) Error() string { return e.err.Error() }
 func (e usageError) Unwrap() error { return e.err }
 
+// scopeAnnotation names the API key scope a command needs, for the hint when
+// the API answers 403.
+const scopeAnnotation = "scope"
+
 type options struct {
 	json   bool
 	stdout io.Writer
@@ -43,7 +47,7 @@ func Execute(args []string, stdout, stderr io.Writer, getenv func(string) string
 	root.SetOut(stdout)
 	root.SetErr(stderr)
 
-	err := root.Execute()
+	cmd, err := root.ExecuteC()
 	if err == nil {
 		return exitOK
 	}
@@ -51,8 +55,14 @@ func Execute(args []string, stdout, stderr io.Writer, getenv func(string) string
 	fmt.Fprintf(stderr, "Error: %s\n", err)
 
 	code := exitCode(err)
-	if code == exitUsage {
+	switch code {
+	case exitUsage:
 		fmt.Fprintf(stderr, "Run 'lillamolnet --help' for usage.\n")
+	case exitForbidden:
+		if scope := cmd.Annotations[scopeAnnotation]; scope != "" {
+			fmt.Fprintf(stderr, "The API key needs the %s scope for this command. "+
+				"Create a key with it at https://lillamolnet.se/users/settings/api_keys\n", scope)
+		}
 	}
 	return code
 }

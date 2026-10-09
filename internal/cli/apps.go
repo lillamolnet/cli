@@ -29,8 +29,9 @@ type appJSON struct {
 
 func newAppsCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
-		Use:   "apps",
-		Short: "List your apps",
+		Use:         "apps",
+		Annotations: map[string]string{scopeAnnotation: "read"},
+		Short:       "List your apps",
 		Long: "List your apps, newest first.\n\n" +
 			"STATE is the state you asked for: started, or stopped by you or by the platform.",
 		Args: noArgs,

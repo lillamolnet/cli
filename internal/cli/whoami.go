@@ -25,9 +25,10 @@ type apiKeyJSON struct {
 
 func newWhoamiCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
-		Use:   "whoami",
-		Short: "Show the user and the API key in use",
-		Args:  noArgs,
+		Use:         "whoami",
+		Annotations: map[string]string{scopeAnnotation: "read"},
+		Short:       "Show the user and the API key in use",
+		Args:        noArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			client, err := opts.client()
 			if err != nil {

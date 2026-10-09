@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -59,6 +60,10 @@ func testAPIErrors(t *testing.T, args ...string) {
 	for _, tc := range cases {
 		url := apiServer(t, nil, tc.status, tc.body)
 		code, stdout, stderr := runWithAPI(t, url, args...)
+
+		if tc.want == exitForbidden && !strings.Contains(stderr, "needs the read scope") {
+			t.Errorf("%s: stderr has no hint about the scope: %q", tc.name, stderr)
+		}
 
 		if code != tc.want {
 			t.Errorf("%s: exit code = %d, want %d (stderr %q)", tc.name, code, tc.want, stderr)
