@@ -13,9 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      # The newest stable Go, which releases are built with. go.mod states the
+      # oldest Go that can build the CLI.
       - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version: stable
+          check-latest: true
       - name: gofmt
         run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - run: go vet ./...
