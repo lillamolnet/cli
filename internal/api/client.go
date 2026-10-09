@@ -134,9 +134,14 @@ func (c *Client) fetch(ctx context.Context, path []string, query url.Values, acc
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, limit))
+	// One byte more than the limit, so that a larger response is an error
+	// rather than silently cut off.
+	body, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
 	if err != nil {
 		return nil, &ConnectionError{Err: err}
+	}
+	if int64(len(body)) > limit {
+		return nil, fmt.Errorf("the response from the API is larger than %d MB", limit>>20)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {

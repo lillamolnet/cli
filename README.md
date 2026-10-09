@@ -119,6 +119,10 @@ an app that has never been built.
 `build-logs --json` is `{"id": "<build id>", "log": "<the log>"}`. Without
 `--json`, the log is printed as it is.
 
+The platform keeps at most 50,000 lines of a build's log. A longer log ends with
+the line `… log truncated after 50000 lines`. A response over 100 MB is an error
+rather than cut off.
+
 ## Exit codes
 
 | Code | Meaning |

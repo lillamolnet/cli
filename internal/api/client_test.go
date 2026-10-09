@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -107,5 +108,18 @@ func TestInvalidBaseURL(t *testing.T) {
 		if _, err := New(u, "key", "dev"); err == nil {
 			t.Errorf("New(%q) should fail", u)
 		}
+	}
+}
+
+func TestTooLargeResponseIsAnError(t *testing.T) {
+	client, _ := server(t, 200, strings.Repeat("x", 2048))
+
+	if _, err := client.fetch(context.Background(), []string{"builds", "x", "log"}, nil, "text/plain", 1024); err == nil {
+		t.Fatal("a response over the limit should be an error, not cut off")
+	}
+
+	body, err := client.fetch(context.Background(), []string{"builds", "x", "log"}, nil, "text/plain", 2048)
+	if err != nil || len(body) != 2048 {
+		t.Errorf("a response at the limit: len = %d, err = %v", len(body), err)
 	}
 }
