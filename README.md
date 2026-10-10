@@ -236,6 +236,8 @@ in the same format as `apps --json`. `result` is `stopped`, `started`,
 
 ## Exit codes
 
+`lillamolnet help exit-codes` prints the same list.
+
 | Code | Meaning |
 |---|---|
 | 0 | Success |

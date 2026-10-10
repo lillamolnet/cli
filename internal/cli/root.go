@@ -105,15 +105,10 @@ func newRootCommand(opts *options) *cobra.Command {
 	root := &cobra.Command{
 		Use:   "lillamolnet",
 		Short: "Deploy and inspect your apps on Lilla Molnet",
-		Long: "lillamolnet is the command line interface for Lilla Molnet.\n\n" +
-			"Get started:\n" +
-			"  lillamolnet login\n" +
-			"  lillamolnet apps\n" +
-			"  lillamolnet status my-blog\n" +
-			"  lillamolnet deploy my-blog --wait\n\n" +
+		Long: intro + "\n\n" +
 			"Every command takes --json for output that scripts and agents can parse. When\n" +
-			"a command fails, --json prints {\"error\": {\"code\", \"message\", \"exit_code\"}}.\n\n" +
-			exitCodeHelp,
+			"a command fails, --json prints {\"error\": {\"code\", \"message\", \"exit_code\"}}.\n" +
+			"The exit codes: lillamolnet help exit-codes",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Args: func(_ *cobra.Command, args []string) error {
@@ -126,7 +121,7 @@ func newRootCommand(opts *options) *cobra.Command {
 			if showVersion {
 				return printVersion(opts)
 			}
-			return cmd.Help()
+			return printIntro(opts)
 		},
 	}
 
@@ -161,12 +156,37 @@ func newRootCommand(opts *options) *cobra.Command {
 		}
 	}
 
+	root.AddCommand(&cobra.Command{
+		Use:   "exit-codes",
+		Short: "What the exit codes mean",
+		Long:  exitCodeHelp,
+	})
+
 	explainAppArg(root)
-	withBanner(root)
 	return root
 }
 
-// exitCodeHelp lists the exit codes, as the README does.
+// intro is what lillamolnet prints without arguments, and the start of its
+// help.
+const intro = "lillamolnet is the command line interface for Lilla Molnet.\n\n" +
+	"Get started:\n" +
+	"  lillamolnet login\n" +
+	"  lillamolnet apps\n" +
+	"  lillamolnet status my-blog\n" +
+	"  lillamolnet deploy my-blog --wait"
+
+// printIntro is lillamolnet without arguments: the banner in a terminal, how
+// to get started, and where the rest is. The full help is in --help.
+func printIntro(opts *options) error {
+	if isTerminal(opts.stdout) {
+		printBanner(opts.stdout)
+	}
+	_, err := fmt.Fprint(opts.stdout, intro+"\n\nRun 'lillamolnet --help' for all commands.\n")
+	return err
+}
+
+// exitCodeHelp lists the exit codes, as the README does. It is the help
+// topic lillamolnet help exit-codes.
 const exitCodeHelp = "Exit codes:\n" +
 	"  0   success\n" +
 	"  1   unknown error\n" +

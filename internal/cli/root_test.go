@@ -17,17 +17,6 @@ func run(t *testing.T, args ...string) (code int, stdout, stderr string) {
 	return code, out.String(), errOut.String()
 }
 
-func TestNoArgumentsPrintsHelp(t *testing.T) {
-	code, stdout, _ := run(t)
-
-	if code != exitOK {
-		t.Fatalf("exit code = %d, want %d", code, exitOK)
-	}
-	if !strings.Contains(stdout, "Usage:") {
-		t.Errorf("stdout has no usage:\n%s", stdout)
-	}
-}
-
 func TestUsageErrorsExitWith2(t *testing.T) {
 	cases := [][]string{
 		{"nope"},
@@ -116,45 +105,52 @@ func TestVersionFlag(t *testing.T) {
 	}
 }
 
-// The root help lists the exit codes, so that an agent need not find the
-// README.
-func TestRootHelpListsExitCodes(t *testing.T) {
-	_, stdout, _ := run(t, "--help")
+// Without arguments, lillamolnet says how to get started and where the rest
+// is, not the full help.
+func TestNoArgumentsPrintsTheIntro(t *testing.T) {
+	code, stdout, stderr := run(t)
 
-	for _, want := range []string{"Exit codes:", "  5   not found", "  10  deploy:"} {
-		if !strings.Contains(stdout, want) {
-			t.Errorf("help has no %q:\n%s", want, stdout)
-		}
+	if code != exitOK || stderr != "" {
+		t.Fatalf("exit code = %d, stderr = %q", code, stderr)
 	}
-	if strings.Contains(stdout, "An app is named by its subdomain") {
-		t.Errorf("help still explains <app>, which each command does:\n%s", stdout)
+	if !strings.Contains(stdout, "lillamolnet deploy my-blog --wait") || !strings.Contains(stdout, "lillamolnet --help") {
+		t.Errorf("stdout:\n%s", stdout)
+	}
+	if strings.Contains(stdout, "Usage:") || strings.Contains(stdout, "~ lilla molnet") {
+		t.Errorf("stdout has the full help or the banner outside a terminal:\n%s", stdout)
 	}
 }
 
-// In a terminal, the banner comes first in the help for lillamolnet itself,
-// and not in the help for a single command.
-func TestBannerOnlyBeforeTheRootHelp(t *testing.T) {
+// In a terminal, the banner comes first without arguments, and never in
+// --help.
+func TestBannerOnlyWithoutArguments(t *testing.T) {
 	isTerminal = func(io.Writer) bool { return true }
 	t.Cleanup(func() { isTerminal = defaultIsTerminal })
 
-	for _, args := range [][]string{nil, {"--help"}} {
-		_, stdout, _ := run(t, args...)
-		banner := strings.Index(stdout, "~ lilla molnet ~")
-		if banner < 0 || banner > strings.Index(stdout, "lillamolnet is the command line interface") {
-			t.Errorf("%v: the banner is not first:\n%s", args, stdout)
-		}
+	_, stdout, _ := run(t)
+	banner := strings.Index(stdout, "~ lilla molnet")
+	if banner < 0 || banner > strings.Index(stdout, "lillamolnet is the command line interface") {
+		t.Errorf("the banner is not first:\n%s", stdout)
 	}
 
-	_, stdout, _ := run(t, "deploy", "--help")
-	if strings.Contains(stdout, "~ lilla molnet ~") {
-		t.Errorf("deploy --help has the banner:\n%s", stdout)
+	for _, args := range [][]string{{"--help"}, {"deploy", "--help"}} {
+		if _, stdout, _ := run(t, args...); strings.Contains(stdout, "~ lilla molnet") {
+			t.Errorf("%v has the banner:\n%s", args, stdout)
+		}
 	}
 }
 
-// Outside a terminal, as when an agent reads the help, there is no banner.
-func TestNoBannerOutsideATerminal(t *testing.T) {
-	_, stdout, _ := run(t, "--help")
-	if strings.Contains(stdout, "~ lilla molnet ~") {
-		t.Errorf("the help has the banner outside a terminal:\n%s", stdout)
+// The exit codes are a help topic, and --help says where it is.
+func TestExitCodesHelpTopic(t *testing.T) {
+	_, help, _ := run(t, "--help")
+	if !strings.Contains(help, "lillamolnet help exit-codes") || strings.Contains(help, "  10  deploy:") {
+		t.Errorf("--help:\n%s", help)
+	}
+
+	code, stdout, _ := run(t, "help", "exit-codes")
+	for _, want := range []string{"Exit codes:", "  5   not found", "  10  deploy:"} {
+		if code != exitOK || !strings.Contains(stdout, want) {
+			t.Errorf("help exit-codes has no %q (exit code %d):\n%s", want, code, stdout)
+		}
 	}
 }
