@@ -75,7 +75,7 @@ func (s *envServer) sentAttributes(i int) map[string]any {
 func runWithInput(t *testing.T, url, stdin string, terminal bool, args ...string) (code int, stdout, stderr string) {
 	t.Helper()
 	var out, errOut bytes.Buffer
-	getenv := env(map[string]string{envToken: "lillamolnet_test_key", envAPIURL: url})
+	getenv := loggedIn(t, url)
 	code = Execute(args, Input{Reader: strings.NewReader(stdin), Terminal: terminal}, &out, &errOut, getenv)
 	return code, out.String(), errOut.String()
 }

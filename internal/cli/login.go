@@ -42,9 +42,9 @@ func newLoginCommand(opts *options) *cobra.Command {
 		Short: "Log in through the browser and save an API key",
 		Long: "Log in through the browser. lillamolnet shows a code, you approve it on\n" +
 			"lillamolnet.se and choose what the key may do, and the key is saved in\n" +
-			"~/.config/lillamolnet/credentials, readable only by you.\n\n" +
-			"In CI and for agents, set LILLAMOLNET_TOKEN instead. It is used before a saved\n" +
-			"key.",
+			"~/.config/lillamolnet/credentials, readable only by you. An agent on the same\n" +
+			"computer uses the saved key too. Elsewhere, run login there and approve the code\n" +
+			"from any device.",
 		Args: noArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			baseURL := opts.baseURL()
@@ -87,10 +87,6 @@ func newLoginCommand(opts *options) *cobra.Command {
 				if user, err := keyed.Me(cmd.Context()); err == nil {
 					email = user.Email
 				}
-			}
-
-			if strings.TrimSpace(opts.getenv(envToken)) != "" {
-				fmt.Fprintf(opts.stderr, "Note: %s is set, and is used before the saved key.\n", envToken)
 			}
 
 			if opts.json {
@@ -158,9 +154,8 @@ func newLogoutCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "logout",
 		Short: "Revoke the saved API key and remove it",
-		Long: "Revoke the key that lillamolnet login saved, and remove it from this computer.\n" +
-			"LILLAMOLNET_TOKEN is not touched.",
-		Args: noArgs,
+		Long:  "Revoke the key that lillamolnet login saved, and remove it from this computer.",
+		Args:  noArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			saved, err := loadCredentials(opts.getenv)
 			if err != nil {
@@ -185,10 +180,6 @@ func newLogoutCommand(opts *options) *cobra.Command {
 
 			if err := removeCredentials(opts.getenv); err != nil {
 				return err
-			}
-
-			if strings.TrimSpace(opts.getenv(envToken)) != "" {
-				fmt.Fprintf(opts.stderr, "Note: %s is still set.\n", envToken)
 			}
 
 			msg := "Logged out. The key is revoked and removed."

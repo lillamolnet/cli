@@ -15,9 +15,6 @@ type whoamiJSON struct {
 	ID     string     `json:"id"`
 	Email  string     `json:"email"`
 	APIKey apiKeyJSON `json:"api_key"`
-	// KeySource is "env" for LILLAMOLNET_TOKEN or "credentials" for the key
-	// that lillamolnet login saved.
-	KeySource string `json:"key_source"`
 }
 
 type apiKeyJSON struct {
@@ -52,7 +49,6 @@ func newWhoamiCommand(opts *options) *cobra.Command {
 						Scopes:    nonNil(user.APIKey.Scopes),
 						ExpiresAt: user.APIKey.ExpiresAt,
 					},
-					KeySource: opts.keySource,
 				})
 			}
 
@@ -61,20 +57,12 @@ func newWhoamiCommand(opts *options) *cobra.Command {
 			fmt.Fprintf(w, "API key:\t%s\n", user.APIKey.Name)
 			fmt.Fprintf(w, "Scopes:\t%s\n", strings.Join(user.APIKey.Scopes, ", "))
 			fmt.Fprintf(w, "Expires:\t%s\n", user.APIKey.ExpiresAt.Format(time.DateOnly))
-			fmt.Fprintf(w, "Key from:\t%s\n", keySourceText(opts))
+			if path, err := credentialsPath(opts.getenv); err == nil {
+				fmt.Fprintf(w, "Saved in:\t%s\n", path)
+			}
 			return w.Flush()
 		},
 	}
-}
-
-func keySourceText(opts *options) string {
-	if opts.keySource == keyFromEnv {
-		return envToken
-	}
-	if path, err := credentialsPath(opts.getenv); err == nil {
-		return path
-	}
-	return "saved credentials"
 }
 
 // nonNil makes an empty list encode as [] rather than null.

@@ -33,11 +33,22 @@ func apiServer(t *testing.T, routes map[string]string, status int, body string) 
 	return srv.URL
 }
 
-// runWithAPI runs the CLI against url with a key.
+// loggedIn returns an environment for url with a saved key for it, in a
+// config directory of the test's own.
+func loggedIn(t *testing.T, url string) func(string) string {
+	t.Helper()
+	getenv := env(map[string]string{envAPIURL: url, "XDG_CONFIG_HOME": t.TempDir()})
+	if _, err := saveCredentials(getenv, credentials{APIURL: url, APIKey: "lillamolnet_test_key", Name: "test"}); err != nil {
+		t.Fatal(err)
+	}
+	return getenv
+}
+
+// runWithAPI runs the CLI against url, logged in.
 func runWithAPI(t *testing.T, url string, args ...string) (code int, stdout, stderr string) {
 	t.Helper()
 	var out, errOut bytes.Buffer
-	getenv := env(map[string]string{envToken: "lillamolnet_test_key", envAPIURL: url})
+	getenv := loggedIn(t, url)
 	code = Execute(args, Input{Reader: strings.NewReader("")}, &out, &errOut, getenv)
 	return code, out.String(), errOut.String()
 }

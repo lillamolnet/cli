@@ -54,8 +54,6 @@ type options struct {
 	stdout      io.Writer
 	stderr      io.Writer
 	getenv      func(string) string
-	// keySource is where the key came from, set by client.
-	keySource string
 }
 
 // Input is where the CLI reads from.
@@ -85,14 +83,6 @@ func Execute(args []string, in Input, stdout, stderr io.Writer, getenv func(stri
 	switch code {
 	case exitUsage:
 		fmt.Fprintf(stderr, "Run 'lillamolnet --help' for usage.\n")
-	case exitAuth:
-		// An old LILLAMOLNET_TOKEN hides the key that login saved.
-		if opts.keySource == keyFromEnv {
-			if saved, _ := loadCredentials(getenv); saved != nil {
-				fmt.Fprintf(stderr, "The key in %s was refused, and it is used before the key that "+
-					"lillamolnet login saved. Unset it to use the saved key: unset %s\n", envToken, envToken)
-			}
-		}
 	case exitForbidden:
 		if scopes := cmd.Annotations[scopeAnnotation]; scopes != "" {
 			fmt.Fprintf(stderr, "The API key needs %s for this command. "+
@@ -117,8 +107,7 @@ func newRootCommand(opts *options) *cobra.Command {
 			"  lillamolnet apps\n" +
 			"  lillamolnet status my-blog\n" +
 			"  lillamolnet deploy my-blog --wait\n\n" +
-			"Every command takes --json for output that scripts and agents can parse. In CI\n" +
-			"and for agents, set LILLAMOLNET_TOKEN instead of logging in.",
+			"Every command takes --json for output that scripts and agents can parse.",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Args: func(_ *cobra.Command, args []string) error {

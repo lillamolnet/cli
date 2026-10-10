@@ -9,40 +9,23 @@ import (
 	"github.com/lillamolnet/cli/internal/api"
 )
 
-// The configuration is read from the environment, so that CI and agents can
-// set it without files. A login command that stores the key comes later.
-const (
-	envToken  = "LILLAMOLNET_TOKEN"
-	envAPIURL = "LILLAMOLNET_API_URL"
-)
+// envAPIURL points the CLI at another environment than the public API. The
+// key always comes from lillamolnet login, never from the environment, so
+// that it stays out of shells, logs and transcripts.
+const envAPIURL = "LILLAMOLNET_API_URL"
 
 // authError means there is no usable API key.
 type authError struct{ msg string }
 
 func (e authError) Error() string { return e.msg }
 
-var errNoToken = authError{
-	"not logged in. Run lillamolnet login, or create a key at " +
-		"https://lillamolnet.se/users/settings/api_keys and set it as " + envToken,
-}
+var errNoToken = authError{"not logged in. Run lillamolnet login"}
 
-// client returns an API client from the environment.
-// Where the key came from, for whoami.
-const (
-	keyFromEnv  = "env"
-	keyFromFile = "credentials"
-)
-
-// client returns an API client with the key from LILLAMOLNET_TOKEN, or else
-// the one lillamolnet login saved. A saved key is only sent to the API it was
-// saved for, so that LILLAMOLNET_API_URL never leaks it to another server.
+// client returns an API client with the key that lillamolnet login saved. It
+// is only sent to the API it was saved for, so that LILLAMOLNET_API_URL never
+// leaks it to another server.
 func (o *options) client() (*api.Client, error) {
 	baseURL := o.baseURL()
-
-	if token := strings.TrimSpace(o.getenv(envToken)); token != "" {
-		o.keySource = keyFromEnv
-		return api.New(baseURL, token, currentVersion().Version)
-	}
 
 	saved, err := loadCredentials(o.getenv)
 	if err != nil {
@@ -52,11 +35,9 @@ func (o *options) client() (*api.Client, error) {
 		return nil, errNoToken
 	}
 	if strings.TrimRight(saved.APIURL, "/") != baseURL {
-		return nil, authError{fmt.Sprintf("the saved key is for %s, not %s. Run lillamolnet login, or set %s",
-			saved.APIURL, baseURL, envToken)}
+		return nil, authError{fmt.Sprintf("the saved key is for %s, not %s. Run lillamolnet login", saved.APIURL, baseURL)}
 	}
 
-	o.keySource = keyFromFile
 	return api.New(baseURL, saved.APIKey, currentVersion().Version)
 }
 

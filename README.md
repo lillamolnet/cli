@@ -51,16 +51,15 @@ choose what the key may do and how long it is valid. The key is saved in
 `~/.config/lillamolnet/credentials` (or `$XDG_CONFIG_HOME`), readable only by
 you. `lillamolnet logout` revokes it and removes it.
 
-In CI and for agents, create a key at
-[lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys)
-and set it as `LILLAMOLNET_TOKEN`. It is used before a saved key.
-`lillamolnet whoami` says which key is in use.
+A coding agent on the same computer uses the saved key, and never needs to see
+it. On another computer, run `lillamolnet login` there and approve the code from
+any device. The key is never read from the environment, so that it stays out of
+shells, logs and transcripts.
 
 ## Configuration
 
 | Variable | Meaning |
 |---|---|
-| `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
 | `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. A saved key is only sent to the API it was saved for. |
 
 A key has scopes. `deploy`, `stop` and `start` need `read` and `deploy`. `logs` needs `logs:read`,
@@ -85,8 +84,7 @@ printf %s "$DATABASE_URL" | lillamolnet env set myapp DATABASE_URL --yes
 
 ### JSON formats
 
-`whoami --json` (`key_source` is `env` for `LILLAMOLNET_TOKEN` or `credentials`
-for a saved key):
+`whoami --json`:
 
 ```json
 {
