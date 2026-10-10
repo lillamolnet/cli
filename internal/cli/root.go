@@ -2,6 +2,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -80,6 +81,10 @@ func Execute(args []string, in Input, stdout, stderr io.Writer, getenv func(stri
 	fmt.Fprintf(stderr, "Error: %s\n", err)
 
 	code := exitCode(err)
+	var printed printedError
+	if wantsJSON(opts, args) && !errors.As(err, &printed) {
+		writeErrorJSON(stdout, err, code, cmd.Annotations[scopeAnnotation])
+	}
 	switch code {
 	case exitUsage:
 		fmt.Fprintf(stderr, "Run 'lillamolnet --help' for usage.\n")
@@ -95,19 +100,20 @@ func Execute(args []string, in Input, stdout, stderr io.Writer, getenv func(stri
 func newRootCommand(opts *options) *cobra.Command {
 	// The commands in the order one uses them, not by name.
 	cobra.EnableCommandSorting = false
+	var showVersion bool
 
 	root := &cobra.Command{
 		Use:   "lillamolnet",
 		Short: "Deploy and inspect your apps on Lilla Molnet",
 		Long: "lillamolnet is the command line interface for Lilla Molnet.\n\n" +
-			"An app is named by its subdomain: my-blog for https://my-blog.lillamolnet.se.\n" +
-			"lillamolnet apps lists them, with the subdomain first.\n\n" +
 			"Get started:\n" +
 			"  lillamolnet login\n" +
 			"  lillamolnet apps\n" +
 			"  lillamolnet status my-blog\n" +
 			"  lillamolnet deploy my-blog --wait\n\n" +
-			"Every command takes --json for output that scripts and agents can parse.",
+			"Every command takes --json for output that scripts and agents can parse. When\n" +
+			"a command fails, --json prints {\"error\": {\"code\", \"message\", \"exit_code\"}}.\n\n" +
+			exitCodeHelp,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Args: func(_ *cobra.Command, args []string) error {
@@ -117,11 +123,15 @@ func newRootCommand(opts *options) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if showVersion {
+				return printVersion(opts)
+			}
 			return cmd.Help()
 		},
 	}
 
 	root.PersistentFlags().BoolVar(&opts.json, "json", false, "print output as JSON")
+	root.Flags().BoolVar(&showVersion, "version", false, "print the version")
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error {
 		return usageError{err}
 	})
@@ -154,6 +164,20 @@ func newRootCommand(opts *options) *cobra.Command {
 	explainAppArg(root)
 	return root
 }
+
+// exitCodeHelp lists the exit codes, as the README does.
+const exitCodeHelp = "Exit codes:\n" +
+	"  0   success\n" +
+	"  1   unknown error\n" +
+	"  2   wrong usage, such as an unknown command, flag or id\n" +
+	"  3   not logged in, or the key is invalid, expired or revoked\n" +
+	"  4   the key lacks a scope the command needs\n" +
+	"  5   not found, such as an unknown app or build\n" +
+	"  6   the API could not be reached\n" +
+	"  7   deploy --wait: the build failed\n" +
+	"  8   deploy --wait: the deploy failed\n" +
+	"  9   deploy --wait: gave up after --timeout. The build goes on\n" +
+	"  10  deploy: a build is already queued or running, so none was started"
 
 // appArgHelp says what <app> is. Every command that takes one gets it, so
 // that the explanation is the same everywhere.

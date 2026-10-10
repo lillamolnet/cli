@@ -56,21 +56,26 @@ func newVersionCommand(opts *options) *cobra.Command {
 		Short: "Print the version",
 		Args:  noArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			info := currentVersion()
-
-			if opts.json {
-				return json.NewEncoder(opts.stdout).Encode(info)
-			}
-
-			if info.Commit != "" {
-				_, err := fmt.Fprintf(opts.stdout, "lillamolnet %s (%s, %s/%s)\n",
-					info.Version, shortCommit(info.Commit), info.OS, info.Arch)
-				return err
-			}
-			_, err := fmt.Fprintf(opts.stdout, "lillamolnet %s (%s/%s)\n", info.Version, info.OS, info.Arch)
-			return err
+			return printVersion(opts)
 		},
 	}
+}
+
+// printVersion prints the version, for version and --version.
+func printVersion(opts *options) error {
+	info := currentVersion()
+
+	if opts.json {
+		return json.NewEncoder(opts.stdout).Encode(info)
+	}
+
+	if info.Commit != "" {
+		_, err := fmt.Fprintf(opts.stdout, "lillamolnet %s (%s, %s/%s)\n",
+			info.Version, shortCommit(info.Commit), info.OS, info.Arch)
+		return err
+	}
+	_, err := fmt.Fprintf(opts.stdout, "lillamolnet %s (%s/%s)\n", info.Version, info.OS, info.Arch)
+	return err
 }
 
 func shortCommit(commit string) string {

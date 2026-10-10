@@ -210,15 +210,16 @@ func reason(s string) string {
 	return ": " + s
 }
 
-// deployOutcome turns the result into the documented exit codes.
+// deployOutcome turns the result into the documented exit codes. The result
+// is already printed, and says how it went, so --json prints no error object.
 func deployOutcome(r api.WaitResult, timedOut bool, timeout time.Duration) error {
 	switch {
 	case r.Result == api.ResultBuildFailed:
-		return codeError{exitBuildFailed, "the build failed"}
+		return printedError{codeError{exitBuildFailed, "the build failed"}}
 	case r.Result == api.ResultDeployFailed:
-		return codeError{exitDeployFailed, "the deploy failed"}
+		return printedError{codeError{exitDeployFailed, "the deploy failed"}}
 	case timedOut:
-		return codeError{exitTimeout, fmt.Sprintf("gave up waiting after %s. The build goes on: %s", timeout, r.Build.ID)}
+		return printedError{codeError{exitTimeout, fmt.Sprintf("gave up waiting after %s. The build goes on: %s", timeout, r.Build.ID)}}
 	default:
 		return nil
 	}

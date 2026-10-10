@@ -29,6 +29,28 @@ var followInterval = 2 * time.Second
 
 var uuidPattern = regexp.MustCompile(`\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z`)
 
+// flagLike matches a --grep value that is a flag by mistake, such as -i.
+var flagLike = regexp.MustCompile(`\A--?[A-Za-z][A-Za-z-]*\z`)
+
+// shortDuration writes 1h for 1h0m0s and 90m for 1h30m0s.
+func shortDuration(d time.Duration) string {
+	switch {
+	case d%time.Hour == 0:
+		return fmt.Sprintf("%dh", d/time.Hour)
+	case d%time.Minute == 0:
+		return fmt.Sprintf("%dm", d/time.Minute)
+	default:
+		return d.String()
+	}
+}
+
+func grepSuffix(grep string) string {
+	if grep == "" {
+		return ""
+	}
+	return fmt.Sprintf(" that contain %q", grep)
+}
+
 func newLogsCommand(opts *options) *cobra.Command {
 	var since time.Duration
 	var limit int
@@ -54,6 +76,10 @@ func newLogsCommand(opts *options) *cobra.Command {
 			if limit < 1 || limit > api.MaxLogsLimit {
 				return usageError{fmt.Errorf("--limit must be between 1 and %d", api.MaxLogsLimit)}
 			}
+			// --grep -i would otherwise search for the text "-i".
+			if flagLike.MatchString(grep) {
+				return usageError{fmt.Errorf("--grep %s looks like a flag. --grep takes the text to search for, and the search is case-sensitive", grep)}
+			}
 
 			client, err := opts.client()
 			if err != nil {
@@ -77,6 +103,16 @@ func newLogsCommand(opts *options) *cobra.Command {
 				return err
 			}
 
+			switch {
+			case len(lines) >= limit:
+				fmt.Fprintf(opts.stderr, "Only the newest %d lines are shown, and older lines in the last %s were left out. "+
+					"Raise --limit (at most %d), shorten --since or narrow it down with --grep.\n",
+					limit, shortDuration(since), api.MaxLogsLimit)
+			case len(lines) == 0 && !follow:
+				fmt.Fprintf(opts.stderr, "No lines in the last %s%s. New lines can take up to a minute to show up, "+
+					"for example after a deploy.\n", shortDuration(since), grepSuffix(grep))
+			}
+
 			if !follow {
 				return nil
 			}
@@ -88,8 +124,8 @@ func newLogsCommand(opts *options) *cobra.Command {
 	}
 
 	cmd.Flags().DurationVar(&since, "since", time.Hour, "how far back, such as 15m or 24h, at most 168h")
-	cmd.Flags().IntVar(&limit, "limit", 200, fmt.Sprintf("the most lines to print first, at most %d", api.MaxLogsLimit))
-	cmd.Flags().StringVar(&grep, "grep", "", "only lines that contain the text")
+	cmd.Flags().IntVar(&limit, "limit", 200, fmt.Sprintf("print at most the newest this many lines, at most %d", api.MaxLogsLimit))
+	cmd.Flags().StringVar(&grep, "grep", "", "only lines that contain the text, case-sensitive. Applied before --limit")
 	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "print new lines as they come, until Ctrl-C")
 	return cmd
 }

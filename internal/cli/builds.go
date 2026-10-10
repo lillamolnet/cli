@@ -89,6 +89,10 @@ func newBuildLogsCommand(opts *options) *cobra.Command {
 			"and is empty for a build without a log.",
 		Args: exactlyOne("build"),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !uuidPattern.MatchString(args[0]) {
+				return usageError{fmt.Errorf("%q is not a build id. Build ids look like 556cad24-fb5f-4ece-903c-3c534f7126d5", args[0])}
+			}
+
 			client, err := opts.client()
 			if err != nil {
 				return err

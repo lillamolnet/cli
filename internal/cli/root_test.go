@@ -106,3 +106,26 @@ func TestCommandsWithAnAppExplainIt(t *testing.T) {
 		t.Errorf("only %d commands take <app>", checked)
 	}
 }
+
+func TestVersionFlag(t *testing.T) {
+	code, stdout, stderr := run(t, "--version")
+
+	if code != exitOK || stderr != "" || !strings.HasPrefix(stdout, "lillamolnet ") {
+		t.Errorf("exit code = %d, stdout = %q, stderr = %q", code, stdout, stderr)
+	}
+}
+
+// The root help lists the exit codes, so that an agent need not find the
+// README.
+func TestRootHelpListsExitCodes(t *testing.T) {
+	_, stdout, _ := run(t, "--help")
+
+	for _, want := range []string{"Exit codes:", "  5   not found", "  10  deploy:"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("help has no %q:\n%s", want, stdout)
+		}
+	}
+	if strings.Contains(stdout, "An app is named by its subdomain") {
+		t.Errorf("help still explains <app>, which each command does:\n%s", stdout)
+	}
+}

@@ -114,3 +114,11 @@ func TestBuildLogsUnknownBuild(t *testing.T) {
 func TestBuildLogsErrors(t *testing.T) {
 	testAPIErrors(t, "build-logs", failedBuildID)
 }
+
+func TestBuildLogsRefusesAMalformedID(t *testing.T) {
+	code, stdout, stderr := run(t, "build-logs", "not-an-id")
+
+	if code != exitUsage || stdout != "" || !strings.Contains(stderr, "is not a build id") {
+		t.Errorf("exit code = %d, stdout = %q, stderr = %q", code, stdout, stderr)
+	}
+}

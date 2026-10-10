@@ -39,7 +39,7 @@ it: `my-blog` for `https://my-blog.lillamolnet.se`. Its id or name works too.
 
 | Command | What it does |
 |---|---|
-| `lillamolnet version` | Prints the version |
+| `lillamolnet version` | Prints the version. `lillamolnet --version` does the same |
 | `lillamolnet login` | Logs in through the browser and saves an API key |
 | `lillamolnet logout` | Revokes the saved key and removes it |
 | `lillamolnet whoami` | Shows the user and the API key in use, with its scopes and expiry |
@@ -48,7 +48,7 @@ it: `my-blog` for `https://my-blog.lillamolnet.se`. Its id or name works too.
 | `lillamolnet builds <app>` | Lists an app's builds, newest first. `--limit` sets how many, at most 100 |
 | `lillamolnet build-logs <build>` | Prints a build's log. `<build>` is a build id, from `builds` or `status` |
 | `lillamolnet deploy <app> [--wait]` | Builds and deploys an app, like the Deploy button. `--wait` follows it to the end, for at most `--timeout` (default 30m) |
-| `lillamolnet logs <app>` | Prints an app's logs, oldest first. `--since` (default 1h, at most 168h), `--limit` (default 200, at most 1000), `--grep` and `--follow` |
+| `lillamolnet logs <app>` | Prints an app's logs, oldest first. `--since` (default 1h, at most 168h), `--limit` (default 200, at most 1000), `--grep` and `--follow`. `--limit` keeps the newest lines, and `--grep` is case-sensitive and applied before it |
 | `lillamolnet env <app>` | Lists an app's environment variables by key. The values are never shown |
 | `lillamolnet env set <app> KEY=VALUE` | Sets a variable, or rotates a secret one. The value can also come on stdin. Takes effect at the next deploy |
 | `lillamolnet env unset <app> KEY` | Removes a variable. Takes effect at the next deploy |
@@ -89,6 +89,24 @@ the other commands.
 Data goes to stdout, errors go to stderr. With `--json`, stdout is a single JSON
 value. The JSON format is a stable contract: fields may be added, but are not
 removed or changed. The tables in normal output may change at any time.
+
+When a command fails with `--json`, stdout holds an error object, and the
+error is also printed as text on stderr:
+
+```json
+{"error": {"code": "not_found", "message": "no app \"my-blg\". Run 'lillamolnet apps' to list your apps", "exit_code": 5}}
+```
+
+`code` names the exit code: `error`, `usage`, `auth`, `forbidden`, `not_found`,
+`unreachable`, `build_failed`, `deploy_failed`, `timeout` or `already_building`.
+`http_status` is there when the API refused the call, and `required_scopes`
+when the key lacks a scope. `deploy --wait` prints its result instead when the
+build or the deploy fails, or the wait times out, since the result already says
+how it went.
+
+`logs` prints notes on stderr, never on stdout: when `--limit` cut older lines,
+and when there were no lines at all. New lines can take up to a minute to show
+up, for example right after a deploy.
 
 The CLI never asks interactive questions when stdin is not a terminal.
 `env set`, `env unset` and `stop` ask before changing anything when stdin is a
@@ -222,10 +240,10 @@ in the same format as `apps --json`. `result` is `stopped`, `started`,
 |---|---|
 | 0 | Success |
 | 1 | Unknown error |
-| 2 | Wrong usage, such as an unknown command or flag |
+| 2 | Wrong usage, such as an unknown command or flag, or a malformed id |
 | 3 | No API key, or the key is invalid, expired or revoked |
 | 4 | The key lacks the scope the command needs |
-| 5 | Not found, such as an unknown app |
+| 5 | Not found, such as an unknown app or build |
 | 6 | The API could not be reached |
 | 7 | `deploy --wait`: the build failed |
 | 8 | `deploy --wait`: the deploy failed |

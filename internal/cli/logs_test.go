@@ -86,6 +86,7 @@ func TestLogsBadFlags(t *testing.T) {
 	url := apiServer(t, nil, 404, "")
 	for _, args := range [][]string{
 		{"--since", "0s"}, {"--since", "169h"}, {"--limit", "0"}, {"--limit", "1001"},
+		{"--grep", "-i"}, {"--grep", "--ignore-case"},
 	} {
 		code, _, _ := runWithAPI(t, url, append([]string{"logs", bakeryID}, args...)...)
 		if code != exitUsage {
@@ -185,5 +186,39 @@ func TestLogCursorKeepsLinesWithTheSameTimestamp(t *testing.T) {
 	}
 	if got := texts(c.seen([]api.LogLine{line("7", "e"), line("7", "e")})); got != "" {
 		t.Errorf("fifth = %q", got)
+	}
+}
+
+// When the limit is reached, stderr says that older lines were left out.
+func TestLogsSaysWhenTheLimitCutsLines(t *testing.T) {
+	url := apiServer(t, map[string]string{"/api/v1/apps/" + bakeryID + "/logs": "logs.json"}, 404, "")
+
+	code, stdout, stderr := runWithAPI(t, url, "logs", bakeryID, "--limit", "3")
+	if code != exitOK || strings.Count(stdout, "\n") != 3 {
+		t.Fatalf("exit code = %d, stdout:\n%s", code, stdout)
+	}
+	if !strings.Contains(stderr, "Only the newest 3 lines are shown") || !strings.Contains(stderr, "last 1h") {
+		t.Errorf("stderr = %q", stderr)
+	}
+
+	_, _, stderr = runWithAPI(t, url, "logs", bakeryID)
+	if stderr != "" {
+		t.Errorf("under the limit, stderr = %q", stderr)
+	}
+}
+
+// No lines is not an error, but stderr says that new lines can lag.
+func TestLogsExplainsNoLines(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"meta":{"lines":[],"next_after":null}}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	code, stdout, stderr := runWithAPI(t, srv.URL, "logs", bakeryID, "--since", "10m", "--grep", "boom", "--json")
+	if code != exitOK || stdout != "" {
+		t.Fatalf("exit code = %d, stdout = %q", code, stdout)
+	}
+	if !strings.Contains(stderr, `No lines in the last 10m that contain "boom"`) || !strings.Contains(stderr, "up to a minute") {
+		t.Errorf("stderr = %q", stderr)
 	}
 }
