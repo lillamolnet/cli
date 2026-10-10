@@ -42,11 +42,11 @@ func newEnvCommand(opts *options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:         "env <app>",
 		Annotations: map[string]string{scopeAnnotation: "read"},
-		Short:       "List an app's environment variables, never their values",
+		Short:       "List, set and remove environment variables, never showing values",
 		Long: "List an app's environment variables by key, with scope and whether they are\n" +
-			"secret. The values are never shown, not even for variables that are not secret.\n\n" +
-			"<app> is the app's subdomain, id or name.",
-		Args: exactlyOne("app"),
+			"secret. The values are never shown, not even for variables that are not secret.",
+		Example: "  lillamolnet env my-blog",
+		Args:    exactlyOne("app"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := opts.client()
 			if err != nil {
@@ -95,7 +95,9 @@ func newEnvSetCommand(opts *options) *cobra.Command {
 	var plain, yes bool
 
 	cmd := &cobra.Command{
-		Use:         "set <app> KEY=VALUE",
+		Use: "set <app> KEY=VALUE",
+		Example: "  lillamolnet env set my-blog PHX_HOST=my-blog.lillamolnet.se --plain --yes\n" +
+			"  printf %s \"$DATABASE_URL\" | lillamolnet env set my-blog DATABASE_URL --yes",
 		Annotations: map[string]string{scopeAnnotation: "read,env:write"},
 		Short:       "Set an environment variable",
 		Long: "Set an environment variable. A new key is created, a plain variable gets the new\n" +
@@ -182,6 +184,7 @@ func newEnvUnsetCommand(opts *options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:         "unset <app> KEY",
+		Example:     "  lillamolnet env unset my-blog PHX_HOST --yes",
 		Annotations: map[string]string{scopeAnnotation: "read,env:write"},
 		Short:       "Remove an environment variable",
 		Long: "Remove an environment variable. It takes effect at the next deploy.\n\n" +

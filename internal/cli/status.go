@@ -51,9 +51,10 @@ func newStatusCommand(opts *options) *cobra.Command {
 		Annotations: map[string]string{scopeAnnotation: "read"},
 		Short:       "Show an app with its latest build and deploy",
 		Long: "Show an app with its latest build and its latest deploy.\n\n" +
-			"<app> is the app's subdomain, id or name. The latest deploy can belong to an\n" +
-			"older build than the latest, for example when the latest build failed.",
-		Args: exactlyOne("app"),
+			"The latest deploy can belong to an older build than the latest, for example\n" +
+			"when the latest build failed.",
+		Example: "  lillamolnet status my-blog\n  lillamolnet status my-blog --json",
+		Args:    exactlyOne("app"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := opts.client()
 			if err != nil {

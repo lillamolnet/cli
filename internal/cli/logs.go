@@ -36,14 +36,15 @@ func newLogsCommand(opts *options) *cobra.Command {
 	var follow bool
 
 	cmd := &cobra.Command{
-		Use:         "logs <app>",
+		Use: "logs <app>",
+		Example: "  lillamolnet logs my-blog --since 15m\n" +
+			"  lillamolnet logs my-blog --grep ERROR --follow",
 		Annotations: map[string]string{scopeAnnotation: "read,logs:read"},
 		Short:       "Print an app's logs",
 		Long: "Print an app's logs, oldest first.\n\n" +
-			"<app> is the app's subdomain, id or name. With the app's id, the API key only\n" +
-			"needs the logs:read scope. A subdomain or name is looked up first, which also\n" +
-			"needs read. Logs may contain personal data, which is why they have their own\n" +
-			"scope.\n\n" +
+			"Logs may contain personal data, which is why they have their own scope,\n" +
+			"logs:read. A subdomain or name is looked up first, which also needs read. With\n" +
+			"the app's id, logs:read is enough.\n\n" +
 			"With --follow, new lines are printed as they come, until Ctrl-C.",
 		Args: exactlyOne("app"),
 		RunE: func(cmd *cobra.Command, args []string) error {

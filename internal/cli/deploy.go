@@ -42,13 +42,15 @@ func newDeployCommand(opts *options) *cobra.Command {
 	var timeout time.Duration
 
 	cmd := &cobra.Command{
-		Use:         "deploy <app>",
+		Use: "deploy <app>",
+		Example: "  lillamolnet deploy my-blog --wait\n" +
+			"  lillamolnet deploy my-blog --wait --timeout 10m --json",
 		Annotations: map[string]string{scopeAnnotation: "read,deploy"},
 		Short:       "Build and deploy an app",
 		Long: "Build and deploy an app from its repository, like the Deploy button.\n\n" +
-			"<app> is the app's subdomain, id or name. Without --wait, deploy returns as soon\n" +
-			"as the build is queued. With --wait, it follows the build and the deploy to the\n" +
-			"end, prints progress on stderr, and exits with a code that says how it went.\n" +
+			"Without --wait, deploy returns as soon as the build is queued. With --wait, it\n" +
+			"follows the build and the deploy to the end, prints progress on stderr, and\n" +
+			"exits with a code that says how it went.\n" +
 			"If a build of the app is already queued or running, no new one is started.",
 		Args: exactlyOne("app"),
 		RunE: func(cmd *cobra.Command, args []string) error {

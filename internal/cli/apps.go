@@ -30,10 +30,13 @@ type appJSON struct {
 
 func newAppsCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
-		Use:         "apps",
+		Use: "apps",
+		Example: "  lillamolnet apps\n" +
+			"  lillamolnet apps --json | jq -r '.[].subdomain'",
 		Annotations: map[string]string{scopeAnnotation: "read"},
 		Short:       "List your apps",
-		Long: "List your apps, newest first.\n\n" +
+		Long: "List your apps, newest first. Use the subdomain in the first column with the\n" +
+			"other commands.\n\n" +
 			"STATE is the state you asked for: started, or stopped by you or by the platform.",
 		Args: noArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -61,10 +64,10 @@ func newAppsCommand(opts *options) *cobra.Command {
 			}
 
 			w := tabwriter.NewWriter(opts.stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tSUBDOMAIN\tSTATE\tAUTO DEPLOY\tREPO")
+			fmt.Fprintln(w, "SUBDOMAIN\tNAME\tSTATE\tAUTO DEPLOY\tREPO")
 			for _, app := range apps {
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-					app.Name, app.Subdomain, state(app), autoDeploy(app), app.RepoURL)
+					app.Subdomain, app.Name, state(app), autoDeploy(app), app.RepoURL)
 			}
 			return w.Flush()
 		},

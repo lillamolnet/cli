@@ -24,9 +24,9 @@ func newBuildsCommand(opts *options) *cobra.Command {
 		Use:         "builds <app>",
 		Annotations: map[string]string{scopeAnnotation: "read"},
 		Short:       "List an app's builds, newest first",
-		Long: "List an app's builds, newest first.\n\n" +
-			"<app> is the app's subdomain, id or name. Use the build id with build-logs.",
-		Args: exactlyOne("app"),
+		Long:        "List an app's builds, newest first. Use the build id with build-logs.",
+		Example:     "  lillamolnet builds my-blog --limit 5",
+		Args:        exactlyOne("app"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if limit < 1 || limit > api.MaxBuildsPerPage {
 				return usageError{fmt.Errorf("--limit must be between 1 and %d", api.MaxBuildsPerPage)}
@@ -79,7 +79,9 @@ func printBuilds(out io.Writer, builds []api.Build) error {
 
 func newBuildLogsCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
-		Use:         "build-logs <build>",
+		Use: "build-logs <build>",
+		Example: "  lillamolnet build-logs 556cad24-fb5f-4ece-903c-3c534f7126d5\n" +
+			"  lillamolnet build-logs $(lillamolnet builds my-blog --limit 1 --json | jq -r '.[0].id')",
 		Annotations: map[string]string{scopeAnnotation: "read"},
 		Short:       "Print a build's log",
 		Long: "Print a build's log.\n\n" +

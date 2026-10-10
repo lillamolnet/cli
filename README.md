@@ -16,6 +16,10 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 
 ## Commands
 
+`<app>` is the app's subdomain, as the first column of `lillamolnet apps` shows
+it: `my-blog` for `https://my-blog.lillamolnet.se`. Its id or name works too.
+`lillamolnet <command> --help` shows examples.
+
 | Command | What it does |
 |---|---|
 | `lillamolnet version` | Prints the version |

@@ -19,6 +19,7 @@ func newStopCommand(opts *options) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:         "stop <app>",
+		Example:     "  lillamolnet stop my-blog --yes",
 		Annotations: map[string]string{scopeAnnotation: "read,deploy"},
 		Short:       "Stop an app without removing it",
 		Long: "Stop an app. Its containers stop, and it stays stopped until it is started. The\n" +
@@ -55,6 +56,7 @@ func newStopCommand(opts *options) *cobra.Command {
 func newStartCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:         "start <app>",
+		Example:     "  lillamolnet start my-blog",
 		Annotations: map[string]string{scopeAnnotation: "read,deploy"},
 		Short:       "Start a stopped app",
 		Long: "Start a stopped app. The container that ran before starts again, or, if it is\n" +

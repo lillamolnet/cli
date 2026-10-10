@@ -103,11 +103,22 @@ func Execute(args []string, in Input, stdout, stderr io.Writer, getenv func(stri
 }
 
 func newRootCommand(opts *options) *cobra.Command {
+	// The commands in the order one uses them, not by name.
+	cobra.EnableCommandSorting = false
+
 	root := &cobra.Command{
 		Use:   "lillamolnet",
 		Short: "Deploy and inspect your apps on Lilla Molnet",
 		Long: "lillamolnet is the command line interface for Lilla Molnet.\n\n" +
-			"Every command takes --json for output that scripts and agents can parse.",
+			"An app is named by its subdomain: my-blog for https://my-blog.lillamolnet.se.\n" +
+			"lillamolnet apps lists them, with the subdomain first.\n\n" +
+			"Get started:\n" +
+			"  lillamolnet login\n" +
+			"  lillamolnet apps\n" +
+			"  lillamolnet status my-blog\n" +
+			"  lillamolnet deploy my-blog --wait\n\n" +
+			"Every command takes --json for output that scripts and agents can parse. In CI\n" +
+			"and for agents, set LILLAMOLNET_TOKEN instead of logging in.",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Args: func(_ *cobra.Command, args []string) error {
@@ -127,18 +138,47 @@ func newRootCommand(opts *options) *cobra.Command {
 	})
 	root.CompletionOptions.HiddenDefaultCmd = true
 
-	root.AddCommand(newVersionCommand(opts))
-	root.AddCommand(newLoginCommand(opts))
-	root.AddCommand(newLogoutCommand(opts))
-	root.AddCommand(newWhoamiCommand(opts))
-	root.AddCommand(newAppsCommand(opts))
-	root.AddCommand(newStatusCommand(opts))
-	root.AddCommand(newBuildsCommand(opts))
-	root.AddCommand(newBuildLogsCommand(opts))
-	root.AddCommand(newDeployCommand(opts))
-	root.AddCommand(newLogsCommand(opts))
-	root.AddCommand(newEnvCommand(opts))
-	root.AddCommand(newStopCommand(opts))
-	root.AddCommand(newStartCommand(opts))
+	groups := []struct {
+		id, title string
+		commands  []*cobra.Command
+	}{
+		{"apps", "Apps:", []*cobra.Command{
+			newAppsCommand(opts), newStatusCommand(opts), newDeployCommand(opts),
+			newStopCommand(opts), newStartCommand(opts),
+		}},
+		{"builds", "Builds and logs:", []*cobra.Command{
+			newBuildsCommand(opts), newBuildLogsCommand(opts), newLogsCommand(opts),
+		}},
+		{"config", "Configuration:", []*cobra.Command{newEnvCommand(opts)}},
+		{"account", "Account:", []*cobra.Command{
+			newLoginCommand(opts), newLogoutCommand(opts), newWhoamiCommand(opts), newVersionCommand(opts),
+		}},
+	}
+	for _, g := range groups {
+		root.AddGroup(&cobra.Group{ID: g.id, Title: g.title})
+		for _, cmd := range g.commands {
+			cmd.GroupID = g.id
+			root.AddCommand(cmd)
+		}
+	}
+
+	explainAppArg(root)
 	return root
+}
+
+// appArgHelp says what <app> is. Every command that takes one gets it, so
+// that the explanation is the same everywhere.
+const appArgHelp = "<app> is the app's subdomain, as the SUBDOMAIN column of lillamolnet apps\n" +
+	"shows it: my-blog for https://my-blog.lillamolnet.se. Its id or name works too."
+
+func explainAppArg(cmd *cobra.Command) {
+	if strings.Contains(cmd.Use, "<app>") {
+		if cmd.Long == "" {
+			cmd.Long = cmd.Short + "."
+		}
+		cmd.Long += "\n\n" + appArgHelp
+	}
+	for _, sub := range cmd.Commands() {
+		explainAppArg(sub)
+	}
 }
