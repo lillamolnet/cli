@@ -247,3 +247,25 @@ func TestLogout(t *testing.T) {
 		t.Errorf("whoami: exit code = %d, stderr %q", code, stderr)
 	}
 }
+
+func TestRefusedTokenEnvHintsAtSavedKey(t *testing.T) {
+	noWait(t)
+	s := newLoginServer(t, "device_token.json")
+	dir := t.TempDir()
+	runLogin(t, s.url, dir, nil, false, "login")
+
+	refused := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(401)
+		_, _ = w.Write([]byte(`{"errors":[{"status":"401","code":"unauthorized","detail":"A valid API key is required"}]}`))
+	}))
+	t.Cleanup(refused.Close)
+
+	// There is a saved key, and the key in LILLAMOLNET_TOKEN is refused.
+	values := map[string]string{envAPIURL: refused.URL, "XDG_CONFIG_HOME": dir, envToken: "lillamolnet_old"}
+	var out, errOut bytes.Buffer
+	code := Execute([]string{"whoami"}, Input{Reader: strings.NewReader("")}, &out, &errOut, env(values))
+
+	if code != exitAuth || !strings.Contains(errOut.String(), "unset LILLAMOLNET_TOKEN") {
+		t.Errorf("exit code = %d, stderr %q", code, errOut.String())
+	}
+}

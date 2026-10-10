@@ -85,6 +85,14 @@ func Execute(args []string, in Input, stdout, stderr io.Writer, getenv func(stri
 	switch code {
 	case exitUsage:
 		fmt.Fprintf(stderr, "Run 'lillamolnet --help' for usage.\n")
+	case exitAuth:
+		// An old LILLAMOLNET_TOKEN hides the key that login saved.
+		if opts.keySource == keyFromEnv {
+			if saved, _ := loadCredentials(getenv); saved != nil {
+				fmt.Fprintf(stderr, "The key in %s was refused, and it is used before the key that "+
+					"lillamolnet login saved. Unset it to use the saved key: unset %s\n", envToken, envToken)
+			}
+		}
 	case exitForbidden:
 		if scopes := cmd.Annotations[scopeAnnotation]; scopes != "" {
 			fmt.Fprintf(stderr, "The API key needs %s for this command. "+
