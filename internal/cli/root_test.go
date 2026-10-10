@@ -129,3 +129,20 @@ func TestRootHelpListsExitCodes(t *testing.T) {
 		t.Errorf("help still explains <app>, which each command does:\n%s", stdout)
 	}
 }
+
+// The banner comes first in the help for lillamolnet itself, and not in the
+// help for a single command.
+func TestBannerOnlyBeforeTheRootHelp(t *testing.T) {
+	for _, args := range [][]string{nil, {"--help"}} {
+		_, stdout, _ := run(t, args...)
+		banner := strings.Index(stdout, "~ lilla molnet ~")
+		if banner < 0 || banner > strings.Index(stdout, "lillamolnet is the command line interface") {
+			t.Errorf("%v: the banner is not first:\n%s", args, stdout)
+		}
+	}
+
+	_, stdout, _ := run(t, "deploy", "--help")
+	if strings.Contains(stdout, "~ lilla molnet ~") {
+		t.Errorf("deploy --help has the banner:\n%s", stdout)
+	}
+}

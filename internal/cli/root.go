@@ -162,6 +162,7 @@ func newRootCommand(opts *options) *cobra.Command {
 	}
 
 	explainAppArg(root)
+	withBanner(root)
 	return root
 }
 
