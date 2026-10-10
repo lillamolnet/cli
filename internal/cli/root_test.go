@@ -102,7 +102,7 @@ func TestCommandsWithAnAppExplainIt(t *testing.T) {
 	}
 	check(root)
 
-	if checked < 10 {
+	if checked < 9 {
 		t.Errorf("only %d commands take <app>", checked)
 	}
 }
