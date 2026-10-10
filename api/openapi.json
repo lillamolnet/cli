@@ -339,6 +339,82 @@
         ],
         "type": "object"
       },
+      "env_var": {
+        "additionalProperties": false,
+        "description": "A \"Resource object\" representing a env_var",
+        "properties": {
+          "attributes": {
+            "additionalProperties": false,
+            "description": "An attributes object for a env_var",
+            "properties": {
+              "inserted_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "type": "string"
+              },
+              "is_secret": {
+                "description": "Field included by default.",
+                "type": "boolean"
+              },
+              "key": {
+                "description": "Field included by default.",
+                "type": "string"
+              },
+              "last_rotated_at": {
+                "description": "Field included by default.",
+                "nullable": true
+              },
+              "scope": {
+                "description": "Field included by default.",
+                "enum": [
+                  "build",
+                  "runtime",
+                  "both"
+                ],
+                "type": "string"
+              },
+              "updated_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "scope",
+              "is_secret",
+              "inserted_at",
+              "updated_at"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "links": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "relationships": {
+            "additionalProperties": false,
+            "description": "A relationships object for a env_var",
+            "properties": {},
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
       "error": {
         "additionalProperties": false,
         "properties": {
@@ -684,6 +760,343 @@
         },
         "tags": [
           "build"
+        ]
+      }
+    },
+    "/api/v1/apps/{app_id}/env": {
+      "get": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "An app's environment variables, by key. The values are never in the API.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "description": "Sort order to apply to the results",
+            "explode": false,
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "pattern": "^(key|-key|\\+\\+key|--key|scope|-scope|\\+\\+scope|--scope|is_secret|-is_secret|\\+\\+is_secret|--is_secret|last_rotated_at|-last_rotated_at|\\+\\+last_rotated_at|--last_rotated_at|inserted_at|-inserted_at|\\+\\+inserted_at|--inserted_at|updated_at|-updated_at|\\+\\+updated_at|--updated_at)(,(key|-key|\\+\\+key|--key|scope|-scope|\\+\\+scope|--scope|is_secret|-is_secret|\\+\\+is_secret|--is_secret|last_rotated_at|-last_rotated_at|\\+\\+last_rotated_at|--last_rotated_at|inserted_at|-inserted_at|\\+\\+inserted_at|--inserted_at|updated_at|-updated_at|\\+\\+updated_at|--updated_at))*$",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "description": "Relationship paths to include in the response",
+            "explode": false,
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "pattern": "^()(,())*$",
+              "type": "string"
+            },
+            "style": "form"
+          },
+          {
+            "description": "Limits the response fields to only those listed for each type",
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "schema": {
+              "additionalProperties": true,
+              "example": {
+                "env_var": "key,scope,is_secret,last_rotated_at,inserted_at,updated_at"
+              },
+              "properties": {
+                "env_var": {
+                  "description": "Comma separated field names for env_var",
+                  "example": "key,scope,is_secret,last_rotated_at,inserted_at,updated_at",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "style": "deepObject"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "description": "An array of resource objects representing a env_var",
+                      "items": {
+                        "$ref": "#/components/schemas/env_var"
+                      },
+                      "type": "array",
+                      "uniqueItems": true
+                    },
+                    "included": {
+                      "items": {
+                        "oneOf": []
+                      },
+                      "type": "array",
+                      "uniqueItems": true
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "links": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "meta": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "env_var"
+        ]
+      }
+    },
+    "/api/v1/apps/{app_id}/env/{key}": {
+      "delete": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Remove an environment variable. Needs the env:write scope, and read. Takes effect at the next deploy.",
+        "operationId": "unset_env_var",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "env_var"
+        ]
+      },
+      "put": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Set an environment variable. A new key is created, a plain variable gets the new value, and a secret one is rotated. Needs the env:write scope, and read to find the app. Takes effect at the next deploy.",
+        "operationId": "set_env_var",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "properties": {
+                      "attributes": {
+                        "properties": {
+                          "is_secret": {
+                            "type": "boolean"
+                          },
+                          "scope": {
+                            "enum": [
+                              "build",
+                              "runtime",
+                              "both"
+                            ],
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string",
+                            "writeOnly": true
+                          }
+                        },
+                        "required": [
+                          "value"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "attributes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/env_var"
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "result": {
+                          "enum": [
+                            "created",
+                            "updated",
+                            "rotated"
+                          ],
+                          "type": "string"
+                        },
+                        "takes_effect": {
+                          "enum": [
+                            "next_deploy"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "takes_effect"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The variable, never with its value"
+          },
+          "201": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/env_var"
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "result": {
+                          "enum": [
+                            "created",
+                            "updated",
+                            "rotated"
+                          ],
+                          "type": "string"
+                        },
+                        "takes_effect": {
+                          "enum": [
+                            "next_deploy"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "takes_effect"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The variable, never with its value"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "env_var"
         ]
       }
     },

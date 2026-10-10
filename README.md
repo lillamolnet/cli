@@ -26,6 +26,9 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 | `lillamolnet build-logs <build>` | Prints a build's log. `<build>` is a build id, from `builds` or `status` |
 | `lillamolnet deploy <app> [--wait]` | Builds and deploys an app, like the Deploy button. `--wait` follows it to the end, for at most `--timeout` (default 30m) |
 | `lillamolnet logs <app>` | Prints an app's logs, oldest first. `--since` (default 1h, at most 168h), `--limit` (default 200, at most 1000), `--grep` and `--follow` |
+| `lillamolnet env <app>` | Lists an app's environment variables by key. The values are never shown |
+| `lillamolnet env set <app> KEY=VALUE` | Sets a variable, or rotates a secret one. The value can also come on stdin. Takes effect at the next deploy |
+| `lillamolnet env unset <app> KEY` | Removes a variable. Takes effect at the next deploy |
 
 Every command takes `--json`.
 
@@ -38,7 +41,8 @@ Every command takes `--json`.
 
 A key has scopes. `deploy` needs `read` and `deploy`. `logs` needs `logs:read`,
 since logs may contain personal data, and also `read` unless you give the
-app's id. `read` is enough for the other commands.
+app's id. `env set` and `env unset` need `read` and `env:write`. `read` is enough for
+the other commands.
 
 ## Output
 
@@ -47,6 +51,13 @@ value. The JSON format is a stable contract: fields may be added, but are not
 removed or changed. The tables in normal output may change at any time.
 
 The CLI never asks interactive questions when stdin is not a terminal.
+`env set` and `env unset` ask before changing anything when stdin is a terminal,
+and need `--yes` when it is not. Give a secret on stdin rather than as an
+argument, so that it does not end up in the shell's history:
+
+```sh
+printf %s "$DATABASE_URL" | lillamolnet env set myapp DATABASE_URL --yes
+```
 
 ### JSON formats
 
@@ -153,6 +164,12 @@ it is being deployed, does not stop the wait.
 ```
 
 `ts` is nanoseconds since the Unix epoch, as text, and orders the lines exactly.
+
+`env --json` is an array of `{"key", "scope", "secret", "last_rotated_at",
+"created_at", "updated_at"}`, never with a value. `env set --json` and
+`env unset --json` give `{"app", "key", "result", "scope", "secret",
+"takes_effect"}`, where `result` is `created`, `updated`, `rotated` or `removed`
+and `takes_effect` is `next_deploy`.
 
 ## Exit codes
 

@@ -1,0 +1,13 @@
+{
+  "errors": [
+    {
+      "code": "invalid_attribute",
+      "detail": "key has invalid format",
+      "source": {
+        "pointer": "/data/attributes/key"
+      },
+      "status": "422",
+      "title": "Invalid Attribute"
+    }
+  ]
+}

@@ -5,6 +5,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -110,6 +111,7 @@ type request struct {
 	method  string
 	path    []string
 	query   url.Values
+	body    []byte
 	accept  string
 	limit   int64
 	timeout time.Duration
@@ -152,9 +154,17 @@ func (c *Client) fetch(ctx context.Context, r request) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, r.method, u.String(), nil)
+	var body io.Reader
+	if r.body != nil {
+		body = bytes.NewReader(r.body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, r.method, u.String(), body)
 	if err != nil {
 		return nil, err
+	}
+	if r.body != nil {
+		req.Header.Set("Content-Type", mediaType)
 	}
 	req.Header.Set("Accept", r.accept)
 	req.Header.Set("Authorization", "Bearer "+c.token)
@@ -168,18 +178,18 @@ func (c *Client) fetch(ctx context.Context, r request) ([]byte, error) {
 
 	// One byte more than the limit, so that a larger response is an error
 	// rather than silently cut off.
-	body, err := io.ReadAll(io.LimitReader(resp.Body, r.limit+1))
+	data, err := io.ReadAll(io.LimitReader(resp.Body, r.limit+1))
 	if err != nil {
 		return nil, &ConnectionError{Err: err}
 	}
-	if int64(len(body)) > r.limit {
+	if int64(len(data)) > r.limit {
 		return nil, fmt.Errorf("the response from the API is larger than %d MB", r.limit>>20)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, decodeError(resp.StatusCode, body)
+		return nil, decodeError(resp.StatusCode, data)
 	}
-	return body, nil
+	return data, nil
 }
 
 func decodeError(status int, body []byte) error {

@@ -38,7 +38,7 @@ func runWithAPI(t *testing.T, url string, args ...string) (code int, stdout, std
 	t.Helper()
 	var out, errOut bytes.Buffer
 	getenv := env(map[string]string{envToken: "lillamolnet_test_key", envAPIURL: url})
-	code = Execute(args, &out, &errOut, getenv)
+	code = Execute(args, Input{Reader: strings.NewReader("")}, &out, &errOut, getenv)
 	return code, out.String(), errOut.String()
 }
 
@@ -75,7 +75,7 @@ func testAPIErrors(t *testing.T, args ...string) {
 
 	t.Run("no key", func(t *testing.T) {
 		var out, errOut bytes.Buffer
-		code := Execute(args, &out, &errOut, env(nil))
+		code := Execute(args, Input{Reader: strings.NewReader("")}, &out, &errOut, env(nil))
 		if code != exitAuth {
 			t.Errorf("exit code = %d, want %d", code, exitAuth)
 		}

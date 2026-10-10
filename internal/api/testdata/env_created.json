@@ -1,0 +1,24 @@
+{
+  "data": {
+    "attributes": {
+      "inserted_at": "2026-10-10T10:36:12Z",
+      "is_secret": true,
+      "key": "SECRET_KEY_BASE",
+      "last_rotated_at": null,
+      "scope": "runtime",
+      "updated_at": "2026-10-10T10:36:12Z"
+    },
+    "id": "bad702a2-4654-436b-b77e-517413186d20",
+    "links": {},
+    "meta": {},
+    "relationships": {},
+    "type": "env_var"
+  },
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "meta": {
+    "result": "created",
+    "takes_effect": "next_deploy"
+  }
+}

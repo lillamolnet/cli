@@ -47,16 +47,26 @@ func scopeList(scopes string) string {
 }
 
 type options struct {
-	json   bool
-	stdout io.Writer
-	stderr io.Writer
-	getenv func(string) string
+	json  bool
+	stdin io.Reader
+	// interactive is true when stdin is a terminal, so that a command may ask.
+	interactive bool
+	stdout      io.Writer
+	stderr      io.Writer
+	getenv      func(string) string
+}
+
+// Input is where the CLI reads from.
+type Input struct {
+	Reader io.Reader
+	// Terminal is true when Reader is a terminal.
+	Terminal bool
 }
 
 // Execute runs the command line in args and returns the exit code. Data goes
 // to stdout and errors to stderr. getenv reads the configuration, as os.Getenv.
-func Execute(args []string, stdout, stderr io.Writer, getenv func(string) string) int {
-	opts := &options{stdout: stdout, stderr: stderr, getenv: getenv}
+func Execute(args []string, in Input, stdout, stderr io.Writer, getenv func(string) string) int {
+	opts := &options{stdin: in.Reader, interactive: in.Terminal, stdout: stdout, stderr: stderr, getenv: getenv}
 	root := newRootCommand(opts)
 	root.SetArgs(args)
 	root.SetOut(stdout)
@@ -115,5 +125,6 @@ func newRootCommand(opts *options) *cobra.Command {
 	root.AddCommand(newBuildLogsCommand(opts))
 	root.AddCommand(newDeployCommand(opts))
 	root.AddCommand(newLogsCommand(opts))
+	root.AddCommand(newEnvCommand(opts))
 	return root
 }

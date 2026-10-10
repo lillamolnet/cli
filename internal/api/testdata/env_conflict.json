@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "code": "secret_is_secret",
+      "detail": "A secret variable cannot become a plain one. Remove it and set it again",
+      "status": "409",
+      "title": "Conflict"
+    }
+  ]
+}

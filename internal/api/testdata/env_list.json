@@ -1,0 +1,41 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "inserted_at": "2026-10-10T10:36:12Z",
+        "is_secret": true,
+        "key": "DATABASE_URL",
+        "last_rotated_at": null,
+        "scope": "runtime",
+        "updated_at": "2026-10-10T10:36:12Z"
+      },
+      "id": "b44ec0c5-eb14-430f-b12b-54a0dd1a7682",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "env_var"
+    },
+    {
+      "attributes": {
+        "inserted_at": "2026-10-10T10:36:12Z",
+        "is_secret": false,
+        "key": "PHX_HOST",
+        "last_rotated_at": null,
+        "scope": "both",
+        "updated_at": "2026-10-10T10:36:12Z"
+      },
+      "id": "70bb3a71-4a03-4d48-94e8-f5467cfc39dd",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "env_var"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "links": {
+    "self": "http://www.example.com/api/v1/apps/fdf37127-5906-4c4c-9005-4da8cf355adb/env"
+  },
+  "meta": {}
+}
