@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/lillamolnet/cli/internal/api"
@@ -67,7 +68,7 @@ func newLogsCommand(opts *options) *cobra.Command {
 				appID = app.ID
 			}
 
-			lines, next, err := client.Logs(cmd.Context(), appID, api.LogsQuery{Since: since, Limit: limit, Text: grep})
+			lines, _, err := client.Logs(cmd.Context(), appID, api.LogsQuery{Since: since, Limit: limit, Text: grep})
 			if err != nil {
 				return err
 			}
@@ -81,7 +82,7 @@ func newLogsCommand(opts *options) *cobra.Command {
 
 			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt)
 			defer stop()
-			return followLogs(ctx, opts, client, appID, grep, next, since)
+			return followLogs(ctx, opts, client, appID, grep, lines, since)
 		},
 	}
 
@@ -92,11 +93,14 @@ func newLogsCommand(opts *options) *cobra.Command {
 	return cmd
 }
 
-// followLogs asks for the lines after the last one until ctx is done. With no
-// lines yet, it starts from now minus since, so that nothing is missed.
-func followLogs(ctx context.Context, opts *options, client *api.Client, appID, grep, after string, since time.Duration) error {
-	if after == "" {
-		after = fmt.Sprint(time.Now().Add(-since).UnixNano())
+// followLogs asks for new lines until ctx is done, starting after the lines
+// already printed. With none, it starts from now minus since, so that nothing
+// is missed.
+func followLogs(ctx context.Context, opts *options, client *api.Client, appID, grep string, printed []api.LogLine, since time.Duration) error {
+	cursor := newLogCursor(time.Now().Add(-since).UnixNano())
+	if len(printed) > 0 {
+		cursor = newLogCursor(0)
+		cursor.seen(printed)
 	}
 	failures := 0
 
@@ -107,7 +111,7 @@ func followLogs(ctx context.Context, opts *options, client *api.Client, appID, g
 		case <-time.After(followInterval):
 		}
 
-		lines, next, err := client.Logs(ctx, appID, api.LogsQuery{After: after, Limit: api.MaxLogsLimit, Text: grep})
+		lines, _, err := client.Logs(ctx, appID, api.LogsQuery{After: cursor.after(), Limit: api.MaxLogsLimit, Text: grep})
 		if ctx.Err() != nil {
 			return nil
 		}
@@ -121,13 +125,58 @@ func followLogs(ctx context.Context, opts *options, client *api.Client, appID, g
 		}
 		failures = 0
 
-		if err := printLogLines(opts, lines); err != nil {
+		if err := printLogLines(opts, cursor.seen(lines)); err != nil {
 			return err
 		}
-		if next != "" {
-			after = next
-		}
 	}
+}
+
+// logCursor keeps track of where a follow is. Several lines can have the very
+// same timestamp, and one of them can arrive after the others. So the next
+// request starts at the last timestamp, not after it, and the lines at that
+// timestamp that are already printed are skipped.
+type logCursor struct {
+	last    int64
+	printed map[string]int
+}
+
+func newLogCursor(start int64) *logCursor {
+	return &logCursor{last: start, printed: map[string]int{}}
+}
+
+// after is the API's after for the next request: just before the last
+// timestamp, so that lines at it come again.
+func (c *logCursor) after() string {
+	return strconv.FormatInt(c.last-1, 10)
+}
+
+// seen returns the lines that are new, in order, and moves the cursor. At the
+// last timestamp, a text that is already printed n times is skipped its first
+// n times, so that two identical lines both count.
+func (c *logCursor) seen(lines []api.LogLine) []api.LogLine {
+	skipped := map[string]int{}
+	var fresh []api.LogLine
+	for _, l := range lines {
+		ts, err := strconv.ParseInt(l.TS, 10, 64)
+		if err != nil || ts < c.last {
+			continue
+		}
+		if ts == c.last && skipped[l.Line] < c.printed[l.Line] {
+			skipped[l.Line]++
+			continue
+		}
+		fresh = append(fresh, l)
+	}
+
+	for _, l := range fresh {
+		ts, _ := strconv.ParseInt(l.TS, 10, 64)
+		if ts > c.last {
+			c.last = ts
+			c.printed = map[string]int{}
+		}
+		c.printed[l.Line]++
+	}
+	return fresh
 }
 
 func printLogLines(opts *options, lines []api.LogLine) error {

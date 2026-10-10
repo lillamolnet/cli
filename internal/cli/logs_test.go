@@ -135,13 +135,13 @@ func TestFollowLogs(t *testing.T) {
 	var out, errOut bytes.Buffer
 	opts := &options{stdout: &out, stderr: &errOut}
 
-	if err := followLogs(ctx, opts, client, bakeryID, "", "100", time.Hour); err != nil {
+	if err := followLogs(ctx, opts, client, bakeryID, "", []api.LogLine{{TS: "100", Line: "zero"}}, time.Hour); err != nil {
 		t.Fatal(err)
 	}
 
 	mu.Lock()
 	defer mu.Unlock()
-	if strings.Join(afters, ",") != "100,101,101,101,102" {
+	if strings.Join(afters, ",") != "99,100,100,100,101" {
 		t.Errorf("after = %v", afters)
 	}
 	if !strings.Contains(out.String(), "one\n") || !strings.Contains(out.String(), "two\n") {
@@ -149,5 +149,41 @@ func TestFollowLogs(t *testing.T) {
 	}
 	if !strings.Contains(errOut.String(), "trying again") {
 		t.Errorf("stderr = %q", errOut.String())
+	}
+}
+
+// Lines with the very same timestamp are common in Loki. One that arrives
+// after the others must still be printed, and none twice.
+func TestLogCursorKeepsLinesWithTheSameTimestamp(t *testing.T) {
+	line := func(ts, text string) api.LogLine { return api.LogLine{TS: ts, Line: text} }
+	texts := func(lines []api.LogLine) string {
+		var out []string
+		for _, l := range lines {
+			out = append(out, l.Line)
+		}
+		return strings.Join(out, ",")
+	}
+
+	c := newLogCursor(0)
+	if got := texts(c.seen([]api.LogLine{line("4", "x"), line("5", "a")})); got != "x,a" {
+		t.Fatalf("first = %q", got)
+	}
+	if c.after() != "4" {
+		t.Errorf("after = %q, want just before the last timestamp", c.after())
+	}
+
+	// a again, and b with the same timestamp, which arrived later.
+	if got := texts(c.seen([]api.LogLine{line("5", "a"), line("5", "b"), line("6", "c")})); got != "b,c" {
+		t.Errorf("second = %q", got)
+	}
+	if got := texts(c.seen([]api.LogLine{line("6", "c"), line("6", "d")})); got != "d" {
+		t.Errorf("third = %q", got)
+	}
+	// Two identical lines at one timestamp both count.
+	if got := texts(c.seen([]api.LogLine{line("6", "c"), line("6", "d"), line("7", "e"), line("7", "e")})); got != "e,e" {
+		t.Errorf("fourth = %q", got)
+	}
+	if got := texts(c.seen([]api.LogLine{line("7", "e"), line("7", "e")})); got != "" {
+		t.Errorf("fifth = %q", got)
 	}
 }
