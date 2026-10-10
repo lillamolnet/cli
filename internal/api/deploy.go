@@ -74,13 +74,18 @@ type waitDocument struct {
 }
 
 // Wait waits for the build and its deploy to finish, for at most timeout on
-// the server, and returns where they are. Call it again until Done.
-func (c *Client) Wait(ctx context.Context, buildID string, timeout time.Duration) (WaitResult, error) {
+// the server, and returns where they are. Call it again until Done. With
+// since, the result seen last, it also returns as soon as the result is
+// another. An empty since waits until done.
+func (c *Client) Wait(ctx context.Context, buildID string, timeout time.Duration, since string) (WaitResult, error) {
 	if timeout < 0 || timeout > MaxWait {
 		return WaitResult{}, fmt.Errorf("timeout must be between 0 and %s, got %s", MaxWait, timeout)
 	}
 
 	query := url.Values{"timeout": {strconv.Itoa(int(timeout.Seconds()))}}
+	if since != "" {
+		query.Set("since", since)
+	}
 	r := request{
 		method: http.MethodGet,
 		path:   []string{"builds", buildID, "wait"},

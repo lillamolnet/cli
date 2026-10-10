@@ -111,7 +111,7 @@ func waitForDeploy(ctx context.Context, client *api.Client, progress io.Writer, 
 		remaining := time.Until(deadline).Truncate(time.Second)
 		step := min(api.MaxWait, max(remaining, 0))
 
-		result, err := client.Wait(ctx, buildID, step)
+		result, err := client.Wait(ctx, buildID, step, last)
 		if err != nil {
 			failures++
 			if !retryable(err) || failures >= maxWaitFailures {

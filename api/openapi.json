@@ -983,7 +983,7 @@
       "get": {
         "callbacks": {},
         "deprecated": false,
-        "description": "Wait for a build and its deploy to finish, for at most timeout seconds. Answers as soon as they are done. Ask again until meta.done is true.",
+        "description": "Wait for a build and its deploy to finish, for at most timeout seconds. Answers as soon as they are done, or with since as soon as the result changes. Ask again until meta.done is true.",
         "operationId": "wait_for_deploy",
         "parameters": [
           {
@@ -1004,6 +1004,23 @@
               "maximum": 50,
               "minimum": 0,
               "type": "integer"
+            }
+          },
+          {
+            "description": "The result the client saw last. The answer then also comes as soon as the result is another.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "enum": [
+                "queued",
+                "building",
+                "deploying",
+                "deployed",
+                "build_failed",
+                "deploy_failed"
+              ],
+              "type": "string"
             }
           }
         ],

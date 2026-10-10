@@ -49,12 +49,12 @@ func TestStartDeployAlreadyBuilding(t *testing.T) {
 func TestWaitQueued(t *testing.T) {
 	client, req := server(t, 200, string(readFixture(t, "wait_queued.json")))
 
-	result, err := client.Wait(context.Background(), queuedBuildID, 50*time.Second)
+	result, err := client.Wait(context.Background(), queuedBuildID, 50*time.Second, ResultQueued)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if req.URL.Path != "/api/v1/builds/"+queuedBuildID+"/wait" || req.URL.Query().Get("timeout") != "50" {
+	if req.URL.Path != "/api/v1/builds/"+queuedBuildID+"/wait" || req.URL.Query().Get("timeout") != "50" || req.URL.Query().Get("since") != "queued" {
 		t.Errorf("request = %s?%s", req.URL.Path, req.URL.RawQuery)
 	}
 	if result.Done || result.Result != ResultQueued || result.Deploy != nil || result.Build.Status != "queued" {
@@ -65,7 +65,7 @@ func TestWaitQueued(t *testing.T) {
 func TestWaitDeployed(t *testing.T) {
 	client, _ := server(t, 200, string(readFixture(t, "wait_deployed.json")))
 
-	result, err := client.Wait(context.Background(), queuedBuildID, 0)
+	result, err := client.Wait(context.Background(), queuedBuildID, 0, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestWaitTimeout(t *testing.T) {
 	client, _ := server(t, 200, "{}")
 
 	for _, timeout := range []time.Duration{-time.Second, MaxWait + time.Second} {
-		if _, err := client.Wait(context.Background(), "x", timeout); err == nil {
+		if _, err := client.Wait(context.Background(), "x", timeout, ""); err == nil {
 			t.Errorf("timeout %s should fail", timeout)
 		}
 	}
