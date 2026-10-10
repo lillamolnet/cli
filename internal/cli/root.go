@@ -168,7 +168,7 @@ func newRootCommand(opts *options) *cobra.Command {
 
 // intro is what lillamolnet prints without arguments, and the start of its
 // help.
-const intro = "lillamolnet is the command line interface for Lilla Molnet.\n\n" +
+const intro = "this is the command line interface for lilla molnet\n\n" +
 	"Get started:\n" +
 	"  lillamolnet login\n" +
 	"  lillamolnet apps\n" +

@@ -129,7 +129,7 @@ func TestBannerOnlyWithoutArguments(t *testing.T) {
 
 	_, stdout, _ := run(t)
 	banner := strings.Index(stdout, "~ lilla molnet")
-	if banner < 0 || banner > strings.Index(stdout, "lillamolnet is the command line interface") {
+	if banner < 0 || banner > strings.Index(stdout, "this is the command line interface for lilla molnet") {
 		t.Errorf("the banner is not first:\n%s", stdout)
 	}
 
