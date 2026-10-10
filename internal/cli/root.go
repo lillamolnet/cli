@@ -4,6 +4,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,11 @@ const (
 	exitForbidden   = 4
 	exitNotFound    = 5
 	exitUnreachable = 6
+	// deploy --wait
+	exitBuildFailed     = 7
+	exitDeployFailed    = 8
+	exitTimeout         = 9
+	exitAlreadyBuilding = 10
 )
 
 // usageError is a mistake in how the command was called, such as an unknown
@@ -27,9 +33,18 @@ type usageError struct{ err error }
 func (e usageError) Error() string { return e.err.Error() }
 func (e usageError) Unwrap() error { return e.err }
 
-// scopeAnnotation names the API key scope a command needs, for the hint when
-// the API answers 403.
+// scopeAnnotation names the API key scopes a command needs, separated by
+// commas, for the hint when the API answers 403.
 const scopeAnnotation = "scope"
+
+// scopeList says "the read scope" or "the read and deploy scopes".
+func scopeList(scopes string) string {
+	parts := strings.Split(scopes, ",")
+	if len(parts) == 1 {
+		return "the " + parts[0] + " scope"
+	}
+	return "the " + strings.Join(parts[:len(parts)-1], ", ") + " and " + parts[len(parts)-1] + " scopes"
+}
 
 type options struct {
 	json   bool
@@ -59,9 +74,9 @@ func Execute(args []string, stdout, stderr io.Writer, getenv func(string) string
 	case exitUsage:
 		fmt.Fprintf(stderr, "Run 'lillamolnet --help' for usage.\n")
 	case exitForbidden:
-		if scope := cmd.Annotations[scopeAnnotation]; scope != "" {
-			fmt.Fprintf(stderr, "The API key needs the %s scope for this command. "+
-				"Create a key with it at https://lillamolnet.se/users/settings/api_keys\n", scope)
+		if scopes := cmd.Annotations[scopeAnnotation]; scopes != "" {
+			fmt.Fprintf(stderr, "The API key needs %s for this command. "+
+				"Create a key with it at https://lillamolnet.se/users/settings/api_keys\n", scopeList(scopes))
 		}
 	}
 	return code
@@ -98,5 +113,6 @@ func newRootCommand(opts *options) *cobra.Command {
 	root.AddCommand(newStatusCommand(opts))
 	root.AddCommand(newBuildsCommand(opts))
 	root.AddCommand(newBuildLogsCommand(opts))
+	root.AddCommand(newDeployCommand(opts))
 	return root
 }

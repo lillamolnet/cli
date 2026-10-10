@@ -1,0 +1,49 @@
+{
+  "data": {
+    "attributes": {
+      "branch": "main",
+      "error_reason": null,
+      "finished_at": "2026-10-10T10:03:00Z",
+      "repo_commit": "def5678abc",
+      "started_at": "2026-10-10T07:18:47Z",
+      "status": "success",
+      "trigger_type": "manual"
+    },
+    "id": "560b8ba0-8027-449f-b695-d5a4c13077bc",
+    "links": {},
+    "meta": {},
+    "relationships": {},
+    "type": "build"
+  },
+  "included": [
+    {
+      "attributes": {
+        "error_reason": null,
+        "finished_at": "2026-10-10T10:03:40Z",
+        "started_at": "2026-10-10T10:03:10Z",
+        "status": "deployed"
+      },
+      "id": "b827410d-64b1-48cd-b547-7044f5973431",
+      "links": {},
+      "meta": {},
+      "relationships": {
+        "build": {
+          "data": {
+            "id": "560b8ba0-8027-449f-b695-d5a4c13077bc",
+            "type": "build"
+          },
+          "links": {},
+          "meta": {}
+        }
+      },
+      "type": "deploy"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "meta": {
+    "done": true,
+    "result": "deployed"
+  }
+}

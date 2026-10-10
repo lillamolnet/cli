@@ -42,15 +42,25 @@ func TestSpecIsValidOpenAPI(t *testing.T) {
 // assertFollowsSpec checks a successful GET response body against the spec.
 func assertFollowsSpec(t *testing.T, path string, body []byte) {
 	t.Helper()
+	assertFollowsSpecFor(t, "GET", path, 200, body)
+}
+
+// assertFollowsSpecFor checks a response body against the spec.
+func assertFollowsSpecFor(t *testing.T, method, path string, status int, body []byte) {
+	t.Helper()
 	doc := loadSpec(t)
 
 	item := doc.Paths.Find(path)
-	if item == nil || item.Get == nil {
-		t.Fatalf("the spec has no GET %s", path)
+	if item == nil || item.GetOperation(method) == nil {
+		t.Fatalf("the spec has no %s %s", method, path)
 	}
-	media := item.Get.Responses.Status(200).Value.Content.Get(mediaType)
+	response := item.GetOperation(method).Responses.Status(status)
+	if response == nil {
+		t.Fatalf("the spec has no %d response for %s %s", status, method, path)
+	}
+	media := response.Value.Content.Get(mediaType)
 	if media == nil {
-		t.Fatalf("the spec has no %s response for GET %s", mediaType, path)
+		t.Fatalf("the spec has no %s response for %s %s", mediaType, method, path)
 	}
 
 	var value any
@@ -58,7 +68,7 @@ func assertFollowsSpec(t *testing.T, path string, body []byte) {
 		t.Fatalf("not JSON: %v", err)
 	}
 	if err := media.Schema.Value.VisitJSON(value); err != nil {
-		t.Errorf("GET %s does not follow the spec: %v", path, err)
+		t.Errorf("%s %s does not follow the spec: %v", method, path, err)
 	}
 }
 

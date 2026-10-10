@@ -40,7 +40,9 @@ func New(baseURL, token, version string) (*Client, error) {
 		baseURL:   u,
 		token:     token,
 		userAgent: "lillamolnet-cli/" + version,
-		http:      &http.Client{Timeout: 30 * time.Second},
+		// No client-wide timeout: each request sets its own, since waiting for a
+		// deploy takes longer than an ordinary call.
+		http: &http.Client{},
 	}, nil
 }
 
@@ -49,6 +51,9 @@ type Error struct {
 	Status int
 	Code   string
 	Detail string
+	// Meta is the error's meta object, such as the running build's id when a
+	// deploy is refused with already_building.
+	Meta map[string]any
 }
 
 func (e *Error) Error() string {
@@ -85,8 +90,9 @@ type document[D any, M any] struct {
 // example from a proxy, decode to no errors.
 type errorDocument struct {
 	Errors []struct {
-		Code   string `json:"code"`
-		Detail string `json:"detail"`
+		Code   string         `json:"code"`
+		Detail string         `json:"detail"`
+		Meta   map[string]any `json:"meta"`
 	} `json:"errors"`
 }
 
@@ -96,10 +102,29 @@ const (
 	maxTextSize     = 100 << 20
 )
 
+// defaultTimeout is how long an ordinary request may take.
+const defaultTimeout = 30 * time.Second
+
+// request is one call to the API.
+type request struct {
+	method  string
+	path    []string
+	query   url.Values
+	accept  string
+	limit   int64
+	timeout time.Duration
+}
+
 // get fetches path, relative to /api/v1, with the query, and decodes the
 // document into out. JoinPath escapes the path elements.
 func (c *Client) get(ctx context.Context, path []string, query url.Values, out any) error {
-	body, err := c.fetch(ctx, path, query, mediaType, maxDocumentSize)
+	return c.document(ctx, request{method: http.MethodGet, path: path, query: query}, out)
+}
+
+// document makes the request and decodes the JSON:API document into out.
+func (c *Client) document(ctx context.Context, r request, out any) error {
+	r.accept, r.limit = mediaType, maxDocumentSize
+	body, err := c.fetch(ctx, r)
 	if err != nil {
 		return err
 	}
@@ -112,19 +137,26 @@ func (c *Client) get(ctx context.Context, path []string, query url.Values, out a
 
 // getText fetches path as plain text.
 func (c *Client) getText(ctx context.Context, path []string) (string, error) {
-	body, err := c.fetch(ctx, path, nil, "text/plain", maxTextSize)
+	body, err := c.fetch(ctx, request{method: http.MethodGet, path: path, accept: "text/plain", limit: maxTextSize})
 	return string(body), err
 }
 
-func (c *Client) fetch(ctx context.Context, path []string, query url.Values, accept string, limit int64) ([]byte, error) {
-	u := c.baseURL.JoinPath(append([]string{"api", "v1"}, path...)...)
-	u.RawQuery = query.Encode()
+func (c *Client) fetch(ctx context.Context, r request) ([]byte, error) {
+	u := c.baseURL.JoinPath(append([]string{"api", "v1"}, r.path...)...)
+	u.RawQuery = r.query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	timeout := r.timeout
+	if timeout == 0 {
+		timeout = defaultTimeout
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, r.method, u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Accept", accept)
+	req.Header.Set("Accept", r.accept)
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("User-Agent", c.userAgent)
 
@@ -136,12 +168,12 @@ func (c *Client) fetch(ctx context.Context, path []string, query url.Values, acc
 
 	// One byte more than the limit, so that a larger response is an error
 	// rather than silently cut off.
-	body, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, r.limit+1))
 	if err != nil {
 		return nil, &ConnectionError{Err: err}
 	}
-	if int64(len(body)) > limit {
-		return nil, fmt.Errorf("the response from the API is larger than %d MB", limit>>20)
+	if int64(len(body)) > r.limit {
+		return nil, fmt.Errorf("the response from the API is larger than %d MB", r.limit>>20)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
@@ -157,6 +189,7 @@ func decodeError(status int, body []byte) error {
 	if json.Unmarshal(body, &doc) == nil && len(doc.Errors) > 0 {
 		apiErr.Code = doc.Errors[0].Code
 		apiErr.Detail = doc.Errors[0].Detail
+		apiErr.Meta = doc.Errors[0].Meta
 	}
 	return apiErr
 }

@@ -61,7 +61,7 @@ func testAPIErrors(t *testing.T, args ...string) {
 		url := apiServer(t, nil, tc.status, tc.body)
 		code, stdout, stderr := runWithAPI(t, url, args...)
 
-		if tc.want == exitForbidden && !strings.Contains(stderr, "needs the read scope") {
+		if tc.want == exitForbidden && !strings.Contains(stderr, "The API key needs the ") {
 			t.Errorf("%s: stderr has no hint about the scope: %q", tc.name, stderr)
 		}
 

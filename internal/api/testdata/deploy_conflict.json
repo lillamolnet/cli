@@ -1,0 +1,13 @@
+{
+  "errors": [
+    {
+      "code": "already_building",
+      "detail": "A build of the app is already queued or running",
+      "meta": {
+        "build_id": "560b8ba0-8027-449f-b695-d5a4c13077bc"
+      },
+      "status": "409",
+      "title": "Conflict"
+    }
+  ]
+}

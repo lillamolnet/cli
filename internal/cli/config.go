@@ -46,8 +46,14 @@ func exitCode(err error) int {
 	var auth authError
 	var notFound notFoundError
 	var conn *api.ConnectionError
+	var coded codeError
+	var already *api.AlreadyBuildingError
 
 	switch {
+	case errors.As(err, &coded):
+		return coded.code
+	case errors.As(err, &already):
+		return exitAlreadyBuilding
 	case errors.As(err, &usage):
 		return exitUsage
 	case errors.As(err, &auth), api.IsStatus(err, http.StatusUnauthorized):

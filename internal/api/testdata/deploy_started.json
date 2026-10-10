@@ -1,0 +1,21 @@
+{
+  "data": {
+    "attributes": {
+      "branch": null,
+      "error_reason": null,
+      "finished_at": null,
+      "repo_commit": null,
+      "started_at": "2026-10-10T07:18:47Z",
+      "status": "queued",
+      "trigger_type": "manual"
+    },
+    "id": "560b8ba0-8027-449f-b695-d5a4c13077bc",
+    "links": {},
+    "meta": {},
+    "relationships": {},
+    "type": "build"
+  },
+  "jsonapi": {
+    "version": "1.0"
+  }
+}

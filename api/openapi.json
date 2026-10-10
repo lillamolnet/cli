@@ -791,6 +791,60 @@
         ]
       }
     },
+    "/api/v1/apps/{id}/deploys": {
+      "post": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Start a build and a deploy of one of your apps. Needs the deploy scope, and read to find the app. When a build is already queued or running, the answer is 409 with its id in errors[0].meta.build_id.",
+        "operationId": "start_deploy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/build"
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The build, queued"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "build"
+        ]
+      }
+    },
     "/api/v1/builds/{id}": {
       "get": {
         "callbacks": {},
@@ -915,6 +969,102 @@
               }
             },
             "description": "The log"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "build"
+        ]
+      }
+    },
+    "/api/v1/builds/{id}/wait": {
+      "get": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Wait for a build and its deploy to finish, for at most timeout seconds. Answers as soon as they are done. Ask again until meta.done is true.",
+        "operationId": "wait_for_deploy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "description": "Seconds to wait, 0 to 50. Defaults to 50.",
+            "in": "query",
+            "name": "timeout",
+            "required": false,
+            "schema": {
+              "maximum": 50,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/build"
+                    },
+                    "included": {
+                      "items": {
+                        "$ref": "#/components/schemas/deploy"
+                      },
+                      "type": "array"
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "done": {
+                          "type": "boolean"
+                        },
+                        "result": {
+                          "enum": [
+                            "queued",
+                            "building",
+                            "deploying",
+                            "deployed",
+                            "build_failed",
+                            "deploy_failed"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "done",
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "included",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The build, its latest deploy if any, and how it went"
           },
           "default": {
             "$ref": "#/components/responses/errors"

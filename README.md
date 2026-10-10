@@ -24,6 +24,7 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 | `lillamolnet status <app>` | Shows an app with its latest build and latest deploy. `<app>` is the subdomain, id or name |
 | `lillamolnet builds <app>` | Lists an app's builds, newest first. `--limit` sets how many, at most 100 |
 | `lillamolnet build-logs <build>` | Prints a build's log. `<build>` is a build id, from `builds` or `status` |
+| `lillamolnet deploy <app> [--wait]` | Builds and deploys an app, like the Deploy button. `--wait` follows it to the end, for at most `--timeout` (default 30m) |
 
 Every command takes `--json`.
 
@@ -34,7 +35,8 @@ Every command takes `--json`.
 | `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
 | `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. |
 
-A key has scopes. `read` is enough for all the commands that exist today.
+A key has scopes. `deploy` needs `read` and `deploy`. `read` is enough for the
+other commands.
 
 ## Output
 
@@ -123,6 +125,25 @@ The platform keeps at most 50,000 lines of a build's log. A longer log ends with
 the line `… log truncated after 50000 lines`. A response over 100 MB is an error
 rather than cut off.
 
+`deploy --json` has the app, its URL, the build, its latest deploy, and how it
+went. `result` is `queued`, `building` or `deploying` while it goes on, and
+`deployed`, `build_failed` or `deploy_failed` when `done` is true. Without
+`--wait`, `result` is `queued`.
+
+```json
+{
+  "app": "bakery",
+  "url": "https://bakery.lillamolnet.se",
+  "build": { "id": "560b8ba0-8027-449f-b695-d5a4c13077bc", "status": "success", "commit": "def5678abc", "...": "..." },
+  "deploy": { "id": "...", "status": "deployed", "...": "..." },
+  "done": true,
+  "result": "deployed"
+}
+```
+
+With `--wait`, progress goes to stderr. A short outage of the API, such as while
+it is being deployed, does not stop the wait.
+
 ## Exit codes
 
 | Code | Meaning |
@@ -134,6 +155,10 @@ rather than cut off.
 | 4 | The key lacks the scope the command needs |
 | 5 | Not found, such as an unknown app |
 | 6 | The API could not be reached |
+| 7 | `deploy --wait`: the build failed |
+| 8 | `deploy --wait`: the deploy failed |
+| 9 | `deploy --wait`: gave up waiting after `--timeout`. The build goes on |
+| 10 | `deploy`: a build of the app is already queued or running, so no new one was started |
 
 ## Development
 
