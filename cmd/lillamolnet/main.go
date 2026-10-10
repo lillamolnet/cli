@@ -5,16 +5,13 @@ import (
 	"os"
 
 	"github.com/lillamolnet/cli/internal/cli"
+	"golang.org/x/term"
 )
 
 func main() {
-	in := cli.Input{Reader: os.Stdin, Terminal: isTerminal(os.Stdin)}
+	// A real terminal, so that the CLI never asks questions when stdin is a
+	// pipe, a file or /dev/null. /dev/null is a character device too, so the
+	// file mode is not enough.
+	in := cli.Input{Reader: os.Stdin, Terminal: term.IsTerminal(int(os.Stdin.Fd()))}
 	os.Exit(cli.Execute(os.Args[1:], in, os.Stdout, os.Stderr, os.Getenv))
-}
-
-// isTerminal reports whether f is a terminal, so that the CLI never asks
-// questions when stdin is a pipe or a file.
-func isTerminal(f *os.File) bool {
-	info, err := f.Stat()
-	return err == nil && info.Mode()&os.ModeCharDevice != 0
 }
