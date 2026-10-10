@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"strings"
 	"testing"
 
@@ -130,9 +131,12 @@ func TestRootHelpListsExitCodes(t *testing.T) {
 	}
 }
 
-// The banner comes first in the help for lillamolnet itself, and not in the
-// help for a single command.
+// In a terminal, the banner comes first in the help for lillamolnet itself,
+// and not in the help for a single command.
 func TestBannerOnlyBeforeTheRootHelp(t *testing.T) {
+	isTerminal = func(io.Writer) bool { return true }
+	t.Cleanup(func() { isTerminal = defaultIsTerminal })
+
 	for _, args := range [][]string{nil, {"--help"}} {
 		_, stdout, _ := run(t, args...)
 		banner := strings.Index(stdout, "~ lilla molnet ~")
@@ -144,5 +148,13 @@ func TestBannerOnlyBeforeTheRootHelp(t *testing.T) {
 	_, stdout, _ := run(t, "deploy", "--help")
 	if strings.Contains(stdout, "~ lilla molnet ~") {
 		t.Errorf("deploy --help has the banner:\n%s", stdout)
+	}
+}
+
+// Outside a terminal, as when an agent reads the help, there is no banner.
+func TestNoBannerOutsideATerminal(t *testing.T) {
+	_, stdout, _ := run(t, "--help")
+	if strings.Contains(stdout, "~ lilla molnet ~") {
+		t.Errorf("the help has the banner outside a terminal:\n%s", stdout)
 	}
 }
