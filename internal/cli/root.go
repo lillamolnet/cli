@@ -126,5 +126,7 @@ func newRootCommand(opts *options) *cobra.Command {
 	root.AddCommand(newDeployCommand(opts))
 	root.AddCommand(newLogsCommand(opts))
 	root.AddCommand(newEnvCommand(opts))
+	root.AddCommand(newStopCommand(opts))
+	root.AddCommand(newStartCommand(opts))
 	return root
 }

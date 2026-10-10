@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "code": "stopped_by_platform",
+      "detail": "The platform stopped the app, so it cannot be started from here",
+      "status": "409",
+      "title": "Conflict"
+    }
+  ]
+}

@@ -29,6 +29,8 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 | `lillamolnet env <app>` | Lists an app's environment variables by key. The values are never shown |
 | `lillamolnet env set <app> KEY=VALUE` | Sets a variable, or rotates a secret one. The value can also come on stdin. Takes effect at the next deploy |
 | `lillamolnet env unset <app> KEY` | Removes a variable. Takes effect at the next deploy |
+| `lillamolnet stop <app>` | Stops an app without removing it |
+| `lillamolnet start <app>` | Starts a stopped app |
 
 Every command takes `--json`.
 
@@ -39,7 +41,7 @@ Every command takes `--json`.
 | `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
 | `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. |
 
-A key has scopes. `deploy` needs `read` and `deploy`. `logs` needs `logs:read`,
+A key has scopes. `deploy`, `stop` and `start` need `read` and `deploy`. `logs` needs `logs:read`,
 since logs may contain personal data, and also `read` unless you give the
 app's id. `env set` and `env unset` need `read` and `env:write`. `read` is enough for
 the other commands.
@@ -51,8 +53,8 @@ value. The JSON format is a stable contract: fields may be added, but are not
 removed or changed. The tables in normal output may change at any time.
 
 The CLI never asks interactive questions when stdin is not a terminal.
-`env set` and `env unset` ask before changing anything when stdin is a terminal,
-and need `--yes` when it is not. Give a secret on stdin rather than as an
+`env set`, `env unset` and `stop` ask before changing anything when stdin is a
+terminal, and need `--yes` when it is not. Give a secret on stdin rather than as an
 argument, so that it does not end up in the shell's history:
 
 ```sh
@@ -170,6 +172,11 @@ it is being deployed, does not stop the wait.
 `env unset --json` give `{"app", "key", "result", "scope", "secret",
 "takes_effect"}`, where `result` is `created`, `updated`, `rotated` or `removed`
 and `takes_effect` is `next_deploy`.
+
+`stop --json` and `start --json` give `{"app": ..., "result": ...}`, with the app
+in the same format as `apps --json`. `result` is `stopped`, `started`,
+`redeploying` (the container was gone, so the same build is deployed again) or
+`not_deployed`.
 
 ## Exit codes
 

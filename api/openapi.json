@@ -1392,6 +1392,150 @@
         ]
       }
     },
+    "/api/v1/apps/{id}/start": {
+      "post": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Start one of your stopped apps. Needs the deploy scope, and read to find the app.",
+        "operationId": "start_app",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/app"
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "result": {
+                          "enum": [
+                            "stopped",
+                            "started",
+                            "redeploying",
+                            "not_deployed"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The app, and what happened"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "app"
+        ]
+      }
+    },
+    "/api/v1/apps/{id}/stop": {
+      "post": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Stop one of your apps, without removing it. Needs the deploy scope, and read to find the app.",
+        "operationId": "stop_app",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/app"
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "result": {
+                          "enum": [
+                            "stopped",
+                            "started",
+                            "redeploying",
+                            "not_deployed"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The app, and what happened"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "app"
+        ]
+      }
+    },
     "/api/v1/builds/{id}": {
       "get": {
         "callbacks": {},
