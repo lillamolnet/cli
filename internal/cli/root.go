@@ -108,7 +108,8 @@ func newRootCommand(opts *options) *cobra.Command {
 		Long: intro + "\n\n" +
 			"Every command takes --json for output that scripts and agents can parse. When\n" +
 			"a command fails, --json prints {\"error\": {\"code\", \"message\", \"exit_code\"}}.\n" +
-			"The exit codes: lillamolnet help exit-codes",
+			"The exit codes: lillamolnet help exit-codes\n" +
+			"For coding agents: lillamolnet help agents",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Args: func(_ *cobra.Command, args []string) error {
@@ -156,6 +157,11 @@ func newRootCommand(opts *options) *cobra.Command {
 		}
 	}
 
+	root.AddCommand(&cobra.Command{
+		Use:   "agents",
+		Short: "How a coding agent deploys and debugs with lillamolnet",
+		Long:  agentsHelp,
+	})
 	root.AddCommand(&cobra.Command{
 		Use:   "exit-codes",
 		Short: "What the exit codes mean",
