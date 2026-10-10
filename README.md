@@ -19,6 +19,8 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 | Command | What it does |
 |---|---|
 | `lillamolnet version` | Prints the version |
+| `lillamolnet login` | Logs in through the browser and saves an API key |
+| `lillamolnet logout` | Revokes the saved key and removes it |
 | `lillamolnet whoami` | Shows the user and the API key in use, with its scopes and expiry |
 | `lillamolnet apps` | Lists your apps, newest first |
 | `lillamolnet status <app>` | Shows an app with its latest build and latest deploy. `<app>` is the subdomain, id or name |
@@ -34,12 +36,28 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 
 Every command takes `--json`.
 
+## Logging in
+
+```sh
+lillamolnet login
+```
+
+shows a code and opens the browser. Approve the code on lillamolnet.se, and
+choose what the key may do and how long it is valid. The key is saved in
+`~/.config/lillamolnet/credentials` (or `$XDG_CONFIG_HOME`), readable only by
+you. `lillamolnet logout` revokes it and removes it.
+
+In CI and for agents, create a key at
+[lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys)
+and set it as `LILLAMOLNET_TOKEN`. It is used before a saved key.
+`lillamolnet whoami` says which key is in use.
+
 ## Configuration
 
 | Variable | Meaning |
 |---|---|
 | `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
-| `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. |
+| `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. A saved key is only sent to the API it was saved for. |
 
 A key has scopes. `deploy`, `stop` and `start` need `read` and `deploy`. `logs` needs `logs:read`,
 since logs may contain personal data, and also `read` unless you give the
@@ -63,7 +81,8 @@ printf %s "$DATABASE_URL" | lillamolnet env set myapp DATABASE_URL --yes
 
 ### JSON formats
 
-`whoami --json`:
+`whoami --json` (`key_source` is `env` for `LILLAMOLNET_TOKEN` or `credentials`
+for a saved key):
 
 ```json
 {

@@ -167,7 +167,9 @@ func (c *Client) fetch(ctx context.Context, r request) ([]byte, error) {
 		req.Header.Set("Content-Type", mediaType)
 	}
 	req.Header.Set("Accept", r.accept)
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
 	req.Header.Set("User-Agent", c.userAgent)
 
 	resp, err := c.http.Do(req)

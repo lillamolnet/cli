@@ -42,6 +42,7 @@ func TestWhoamiJSON(t *testing.T) {
 			"scopes":     []any{"read", "deploy"},
 			"expires_at": "2027-01-07T20:10:44Z",
 		},
+		"key_source": "env",
 	}
 	if !jsonEqual(got, want) {
 		t.Errorf("got  %v\nwant %v", got, want)

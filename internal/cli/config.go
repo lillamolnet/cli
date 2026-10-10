@@ -2,6 +2,7 @@ package cli
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -21,23 +22,50 @@ type authError struct{ msg string }
 func (e authError) Error() string { return e.msg }
 
 var errNoToken = authError{
-	"no API key. Create one at https://lillamolnet.se/users/settings/api_keys " +
-		"and set it as " + envToken,
+	"not logged in. Run lillamolnet login, or create a key at " +
+		"https://lillamolnet.se/users/settings/api_keys and set it as " + envToken,
 }
 
 // client returns an API client from the environment.
+// Where the key came from, for whoami.
+const (
+	keyFromEnv  = "env"
+	keyFromFile = "credentials"
+)
+
+// client returns an API client with the key from LILLAMOLNET_TOKEN, or else
+// the one lillamolnet login saved. A saved key is only sent to the API it was
+// saved for, so that LILLAMOLNET_API_URL never leaks it to another server.
 func (o *options) client() (*api.Client, error) {
-	token := strings.TrimSpace(o.getenv(envToken))
-	if token == "" {
+	baseURL := o.baseURL()
+
+	if token := strings.TrimSpace(o.getenv(envToken)); token != "" {
+		o.keySource = keyFromEnv
+		return api.New(baseURL, token, currentVersion().Version)
+	}
+
+	saved, err := loadCredentials(o.getenv)
+	if err != nil {
+		return nil, err
+	}
+	if saved == nil {
 		return nil, errNoToken
 	}
-
-	baseURL := strings.TrimSpace(o.getenv(envAPIURL))
-	if baseURL == "" {
-		baseURL = api.DefaultBaseURL
+	if strings.TrimRight(saved.APIURL, "/") != baseURL {
+		return nil, authError{fmt.Sprintf("the saved key is for %s, not %s. Run lillamolnet login, or set %s",
+			saved.APIURL, baseURL, envToken)}
 	}
 
-	return api.New(baseURL, token, currentVersion().Version)
+	o.keySource = keyFromFile
+	return api.New(baseURL, saved.APIKey, currentVersion().Version)
+}
+
+// baseURL is LILLAMOLNET_API_URL, or the public API.
+func (o *options) baseURL() string {
+	if u := strings.TrimSpace(o.getenv(envAPIURL)); u != "" {
+		return strings.TrimRight(u, "/")
+	}
+	return api.DefaultBaseURL
 }
 
 // exitCode maps an error to the documented exit codes.

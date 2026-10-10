@@ -1783,6 +1783,180 @@
         ]
       }
     },
+    "/api/v1/device/codes": {
+      "post": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Start a login from the CLI (RFC 8628). Show user_code and verification_uri to the user, and ask /device/token for the key every interval seconds.",
+        "operationId": "device_code",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "client_name": {
+                    "maxLength": 100,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "device_code": {
+                          "type": "string"
+                        },
+                        "expires_in": {
+                          "type": "integer"
+                        },
+                        "interval": {
+                          "type": "integer"
+                        },
+                        "user_code": {
+                          "type": "string"
+                        },
+                        "verification_uri": {
+                          "type": "string"
+                        },
+                        "verification_uri_complete": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "device_code",
+                        "user_code",
+                        "verification_uri",
+                        "verification_uri_complete",
+                        "expires_in",
+                        "interval"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The codes"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "security": [],
+        "tags": [
+          "device"
+        ]
+      }
+    },
+    "/api/v1/device/token": {
+      "post": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Exchange device_code for an API key once the user has approved it. Until then the answer is 400 with errors[0].code authorization_pending or slow_down, and finally access_denied, expired_token or invalid_grant.",
+        "operationId": "device_token",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "device_code": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "device_code"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "api_key": {
+                          "type": "string"
+                        },
+                        "expires_at": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "api_key",
+                        "name",
+                        "scopes",
+                        "expires_at"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The API key, given once"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "security": [],
+        "tags": [
+          "device"
+        ]
+      }
+    },
     "/api/v1/me": {
       "get": {
         "callbacks": {},
@@ -1892,6 +2066,26 @@
               }
             },
             "description": "Success"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/api/v1/me/api_key": {
+      "delete": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Revoke the API key used for this request, as lillamolnet logout does.",
+        "operationId": "revoke_current_api_key",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Revoked"
           },
           "default": {
             "$ref": "#/components/responses/errors"

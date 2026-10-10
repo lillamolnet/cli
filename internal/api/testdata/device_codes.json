@@ -1,0 +1,13 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "meta": {
+    "device_code": "lmdc_EXAMPLEdevicecode",
+    "expires_in": 600,
+    "interval": 5,
+    "user_code": "ZPQR-FDMQ",
+    "verification_uri": "https://lillamolnet.se/device",
+    "verification_uri_complete": "https://lillamolnet.se/device?code=ZPQR-FDMQ"
+  }
+}

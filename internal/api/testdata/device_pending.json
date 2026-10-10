@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "code": "authorization_pending",
+      "detail": "Waiting for the code to be approved",
+      "status": "400",
+      "title": "Authorization Pending"
+    }
+  ]
+}

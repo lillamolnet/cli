@@ -1,0 +1,14 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "meta": {
+    "api_key": "lillamolnet_EXAMPLEnotarealkey000000000000000000000000000000000000000000_abc123",
+    "expires_at": "2027-01-08T11:23:19Z",
+    "name": "lillamolnet CLI on laptop",
+    "scopes": [
+      "read",
+      "deploy"
+    ]
+  }
+}

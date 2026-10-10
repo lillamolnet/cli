@@ -54,6 +54,8 @@ type options struct {
 	stdout      io.Writer
 	stderr      io.Writer
 	getenv      func(string) string
+	// keySource is where the key came from, set by client.
+	keySource string
 }
 
 // Input is where the CLI reads from.
@@ -118,6 +120,8 @@ func newRootCommand(opts *options) *cobra.Command {
 	root.CompletionOptions.HiddenDefaultCmd = true
 
 	root.AddCommand(newVersionCommand(opts))
+	root.AddCommand(newLoginCommand(opts))
+	root.AddCommand(newLogoutCommand(opts))
 	root.AddCommand(newWhoamiCommand(opts))
 	root.AddCommand(newAppsCommand(opts))
 	root.AddCommand(newStatusCommand(opts))

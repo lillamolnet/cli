@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "code": "slow_down",
+      "detail": "Ask less often, every 5 seconds",
+      "status": "400",
+      "title": "Slow Down"
+    }
+  ]
+}
