@@ -1,0 +1,74 @@
+# Builds and publishes a release when a v* tag is pushed. See
+# .github/workflows/release.yml. Try it locally without publishing:
+#
+#   go run github.com/goreleaser/goreleaser/v2@v2.18.2 release --snapshot --clean
+version: 2
+
+project_name: lillamolnet
+
+before:
+  hooks:
+    - go mod tidy -diff
+
+builds:
+  - main: ./cmd/lillamolnet
+    binary: lillamolnet
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/lillamolnet/cli/internal/cli.version={{ .Version }}
+      - -X github.com/lillamolnet/cli/internal/cli.commit={{ .FullCommit }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  filters:
+    exclude:
+      - "^Merge "
+
+release:
+  draft: false
+  prerelease: auto
+
+# Homebrew casks only work on macOS. Linux uses the archives.
+homebrew_casks:
+  - repository:
+      owner: lillamolnet
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://lillamolnet.se
+    description: Command line interface for Lilla Molnet
+    license: MIT
+    commit_author:
+      name: lillamolnet-release
+      email: noreply@lillamolnet.se
+    # lm as a short alias, next to the full name.
+    custom_block: |
+      binary "lillamolnet", target: "lm"
+    # The binaries are not signed or notarized yet, and macOS refuses to run
+    # a quarantined binary that is not.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/lillamolnet"]
+          end
+    skip_upload: auto

@@ -8,11 +8,28 @@ codes that mean something.
 
 ## Install
 
+On macOS, with [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask lillamolnet/tap/lillamolnet
+```
+
+This installs `lillamolnet` and the short alias `lm`.
+
+On Linux and Windows, download the archive for your system from
+[the releases](https://github.com/lillamolnet/cli/releases), unpack it and put
+`lillamolnet` (or `lillamolnet.exe`) on your `PATH`. `checksums.txt` has the
+SHA-256 of every archive.
+
+With Go 1.25 or newer:
+
 ```sh
 go install github.com/lillamolnet/cli/cmd/lillamolnet@latest
 ```
 
-Binaries for macOS, Linux and Windows, and Homebrew, come later.
+The binaries are not signed yet. The Homebrew cask removes the macOS quarantine
+flag, so that macOS runs the binary. If you download the macOS archive by hand,
+run `xattr -d com.apple.quarantine lillamolnet` once.
 
 ## Commands
 
