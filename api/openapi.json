@@ -845,6 +845,140 @@
         ]
       }
     },
+    "/api/v1/apps/{id}/logs": {
+      "get": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "An app's logs, oldest first. Needs the logs:read scope, since logs may contain personal data. Without after: the latest limit lines from the last since seconds. With after: the lines after it, to follow the log. Pass meta.next_after as after in the next request.",
+        "operationId": "app_logs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          },
+          {
+            "description": "Seconds back, 1 to 604800. Defaults to 3600.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "maximum": 604800,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Lines, 1 to 1000. Defaults to 200.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Only lines that contain the text.",
+            "in": "query",
+            "name": "text",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Nanoseconds since the Unix epoch. Only lines after it.",
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "pattern": "^[0-9]+$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "properties": {
+                        "lines": {
+                          "items": {
+                            "properties": {
+                              "container": {
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "line": {
+                                "type": "string"
+                              },
+                              "time": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "ts": {
+                                "description": "Nanoseconds since the Unix epoch",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ts",
+                              "time",
+                              "line"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "next_after": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "lines",
+                        "next_after"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The lines"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "app"
+        ]
+      }
+    },
     "/api/v1/builds/{id}": {
       "get": {
         "callbacks": {},

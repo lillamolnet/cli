@@ -1,0 +1,28 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "meta": {
+    "lines": [
+      {
+        "container": "app-fdf37127-5906-4c4c-9005-4da8cf355adb-blue",
+        "line": "GET / 200",
+        "time": "2026-10-10T09:57:02.878119Z",
+        "ts": "1791626222878119000"
+      },
+      {
+        "container": "app-fdf37127-5906-4c4c-9005-4da8cf355adb-blue",
+        "line": "ERROR something broke",
+        "time": "2026-10-10T09:57:04.378119Z",
+        "ts": "1791626224378119000"
+      },
+      {
+        "container": "app-fdf37127-5906-4c4c-9005-4da8cf355adb-blue",
+        "line": "GET /health 200",
+        "time": "2026-10-10T09:57:05.878119Z",
+        "ts": "1791626225878119123"
+      }
+    ],
+    "next_after": "1791626225878119123"
+  }
+}

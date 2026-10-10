@@ -114,5 +114,6 @@ func newRootCommand(opts *options) *cobra.Command {
 	root.AddCommand(newBuildsCommand(opts))
 	root.AddCommand(newBuildLogsCommand(opts))
 	root.AddCommand(newDeployCommand(opts))
+	root.AddCommand(newLogsCommand(opts))
 	return root
 }

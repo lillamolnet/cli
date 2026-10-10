@@ -25,6 +25,7 @@ Binaries for macOS, Linux and Windows, and Homebrew, come later.
 | `lillamolnet builds <app>` | Lists an app's builds, newest first. `--limit` sets how many, at most 100 |
 | `lillamolnet build-logs <build>` | Prints a build's log. `<build>` is a build id, from `builds` or `status` |
 | `lillamolnet deploy <app> [--wait]` | Builds and deploys an app, like the Deploy button. `--wait` follows it to the end, for at most `--timeout` (default 30m) |
+| `lillamolnet logs <app>` | Prints an app's logs, oldest first. `--since` (default 1h, at most 168h), `--limit` (default 200, at most 1000), `--grep` and `--follow` |
 
 Every command takes `--json`.
 
@@ -35,8 +36,9 @@ Every command takes `--json`.
 | `LILLAMOLNET_TOKEN` | Your personal API key. Create one at [lillamolnet.se/users/settings/api_keys](https://lillamolnet.se/users/settings/api_keys). |
 | `LILLAMOLNET_API_URL` | The API to use. Defaults to `https://lillamolnet.se`. |
 
-A key has scopes. `deploy` needs `read` and `deploy`. `read` is enough for the
-other commands.
+A key has scopes. `deploy` needs `read` and `deploy`. `logs` needs `logs:read`,
+since logs may contain personal data, and also `read` unless you give the
+app's id. `read` is enough for the other commands.
 
 ## Output
 
@@ -143,6 +145,14 @@ went. `result` is `queued`, `building` or `deploying` while it goes on, and
 
 With `--wait`, progress goes to stderr. A short outage of the API, such as while
 it is being deployed, does not stop the wait.
+
+`logs --json` prints one JSON object per log line, also with `--follow`:
+
+```json
+{"ts":"1791626222878119000","time":"2026-10-10T09:57:02.878119Z","line":"GET / 200","container":"app-...-blue"}
+```
+
+`ts` is nanoseconds since the Unix epoch, as text, and orders the lines exactly.
 
 ## Exit codes
 
