@@ -299,6 +299,14 @@ runs the image with Docker, as the platform does.
 What the platform expects of a repository. lillamolnet check tests the
 repository you are in against it, without deploying.
 
+Source:
+  - The repository is on GitHub, and the app is connected to it. The
+    platform builds from GitHub, never from your computer, so push before
+    you deploy.
+  - lillamolnet deploy and the Deploy button build the repository's default
+    branch. With auto deploy, a push to the app's auto deploy branch builds
+    that branch. lillamolnet apps --json shows both.
+
 Build:
   - A Dockerfile in the root of the repository. The root is the build
     context. No other path or directory is supported.
@@ -363,11 +371,11 @@ Scopes:
 
 Repository:
   lillamolnet help requirements lists what the platform expects of a
-  repository: a Dockerfile in the root, an app that listens on $PORT, and a
-  health check that passes. check tests the repo you are in against it and
-  changes nothing. check --build also builds and runs the image with local
-  Docker, with the platform's flags and health check. check exits with 11 when
-  a check is an error.
+  repository: on GitHub, a Dockerfile in the root, an app that listens on
+  $PORT, and a health check that passes. check tests the repo you are in
+  against it and changes nothing. check --build also builds and runs the
+  image with the platform's flags and health check, which needs Docker running
+  on this computer. check exits with 11 when a check is an error.
 
 Good to know:
   - deploy --wait exits 0 when the new version is live, 7 when the build

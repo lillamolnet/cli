@@ -101,8 +101,8 @@ func imageLabelCheck(ctx context.Context, tag string, dockerfileLabels []string)
 			"image. The platform rejects an image with labels that start with traefik. or spwnr.",
 			strings.Join(fromBase, ", "))}
 	case len(dockerfileLabels) > 0:
-		return checkItem{"image_labels", checkOK, "no labels that the platform controls besides those in the " +
-			"Dockerfile, which labels reports"}
+		return checkItem{"image_labels", checkOK, "the only labels the platform controls are those in the Dockerfile, " +
+			"which the labels check already reports"}
 	default:
 		return checkItem{"image_labels", checkOK, "the image has no labels that the platform controls"}
 	}

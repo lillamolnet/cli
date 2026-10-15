@@ -150,6 +150,9 @@ func newCheckCommand(opts *options) *cobra.Command {
 					})...)
 					checks = connectPortAndHealth(checks, settings)
 				}
+			} else if build {
+				checks = append(checks, checkItem{"build", checkWarning,
+					"skipped, since there is no Dockerfile in the root to build. The run and the health check are skipped too"})
 			}
 
 			return printChecks(opts, app, settings, checks)
@@ -544,11 +547,12 @@ func portCheck(final []instruction, image string, s api.Settings) checkItem {
 	case slices.Contains(exposed, port):
 		return item(checkOK, "EXPOSE %d is the app's port", port)
 	case len(exposed) > 0 && !usesPortVar:
-		return item(checkError, "EXPOSE %d, but the platform sends traffic to port %d. "+
-			"Make the app listen on $PORT, which the platform sets to %d", exposed[0], port, port)
+		return item(checkError, "EXPOSE %d, but the platform sends traffic to port %d, and the Dockerfile "+
+			"never uses $PORT. Make the app listen on $PORT, which the platform sets to %d", exposed[0], port, port)
 	case len(exposed) > 0:
-		return item(checkWarning, "EXPOSE %d, but the platform sends traffic to port %d. "+
-			"That works if the app listens on $PORT, which the platform sets to %d", exposed[0], port, port)
+		return item(checkWarning, "EXPOSE %d, but the platform sends traffic to port %d. The Dockerfile uses "+
+			"PORT, and the platform sets PORT=%d when the container starts, replacing any ENV PORT in the "+
+			"image. So it works if the app listens on $PORT. check --build tests it", exposed[0], port, port)
 	case defaultPorts[imageName(image)] != 0 && defaultPorts[imageName(image)] != port && !usesPortVar:
 		return item(checkError, "%s listens on port %d unless configured, but the platform sends traffic "+
 			"to port %d. Make it listen on $PORT", imageName(image), defaultPorts[imageName(image)], port)
@@ -568,9 +572,6 @@ func commandCheck(final []instruction) checkItem {
 	if m := loopback.FindString(cmd); m != "" {
 		return checkItem{"command", checkWarning, fmt.Sprintf("the command mentions %s. The platform connects "+
 			"from outside the container, so the app must listen on 0.0.0.0", m)}
-	}
-	if len(cmd) > 80 {
-		cmd = cmd[:77] + "..."
 	}
 	return checkItem{"command", checkOK, "starts with " + cmd}
 }

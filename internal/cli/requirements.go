@@ -8,6 +8,14 @@ const requirementsHelp = `Repository requirements
 What the platform expects of a repository. lillamolnet check tests the
 repository you are in against it, without deploying.
 
+Source:
+  - The repository is on GitHub, and the app is connected to it. The
+    platform builds from GitHub, never from your computer, so push before
+    you deploy.
+  - lillamolnet deploy and the Deploy button build the repository's default
+    branch. With auto deploy, a push to the app's auto deploy branch builds
+    that branch. lillamolnet apps --json shows both.
+
 Build:
   - A Dockerfile in the root of the repository. The root is the build
     context. No other path or directory is supported.

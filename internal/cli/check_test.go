@@ -258,3 +258,12 @@ func TestConnectPortAndHealth(t *testing.T) {
 		t.Errorf("port = %+v", got[0])
 	}
 }
+
+func TestCheckBuildWithoutDockerfile(t *testing.T) {
+	gitRepo(t, "https://github.com/example/bakery", map[string]string{"docker/Dockerfile": "FROM node\n"})
+
+	_, out, _ := runCheckJSON(t, "--build")
+	if got := statuses(out); got["build"] != checkWarning || got["dockerfile"] != checkError {
+		t.Errorf("checks = %+v", out.Checks)
+	}
+}

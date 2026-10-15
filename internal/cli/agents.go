@@ -35,11 +35,11 @@ Scopes:
 
 Repository:
   lillamolnet help requirements lists what the platform expects of a
-  repository: a Dockerfile in the root, an app that listens on $PORT, and a
-  health check that passes. check tests the repo you are in against it and
-  changes nothing. check --build also builds and runs the image with local
-  Docker, with the platform's flags and health check. check exits with 11 when
-  a check is an error.
+  repository: on GitHub, a Dockerfile in the root, an app that listens on
+  $PORT, and a health check that passes. check tests the repo you are in
+  against it and changes nothing. check --build also builds and runs the
+  image with the platform's flags and health check, which needs Docker running
+  on this computer. check exits with 11 when a check is an error.
 
 Good to know:
   - deploy --wait exits 0 when the new version is live, 7 when the build
