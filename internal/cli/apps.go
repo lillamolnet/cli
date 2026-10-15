@@ -26,6 +26,14 @@ type appJSON struct {
 	StoppedBy         *string    `json:"stopped_by"`
 	CreatedAt         time.Time  `json:"created_at"`
 	UpdatedAt         time.Time  `json:"updated_at"`
+	// The settings a deploy uses. null when the API does not have them.
+	ContainerPort   *int     `json:"container_port"`
+	HealthCheckType *string  `json:"health_check_type"`
+	HealthCheckPath *string  `json:"health_check_path"`
+	HealthCheckPort *int     `json:"health_check_port"`
+	MemoryLimitMB   *int     `json:"memory_limit_mb"`
+	CPULimit        *float64 `json:"cpu_limit"`
+	PidsLimit       *int     `json:"pids_limit"`
 }
 
 func newAppsCommand(opts *options) *cobra.Command {
@@ -75,6 +83,7 @@ func newAppsCommand(opts *options) *cobra.Command {
 }
 
 func toAppJSON(app api.App) appJSON {
+	s := app.Settings
 	return appJSON{
 		ID:                app.ID,
 		Name:              app.Name,
@@ -90,6 +99,13 @@ func toAppJSON(app api.App) appJSON {
 		StoppedBy:         optional(app.StoppedBy),
 		CreatedAt:         app.InsertedAt,
 		UpdatedAt:         app.UpdatedAt,
+		ContainerPort:     nonZero(s.ContainerPort),
+		HealthCheckType:   optional(s.HealthCheckType),
+		HealthCheckPath:   optional(s.HealthCheckPath),
+		HealthCheckPort:   nonZero(s.HealthCheckPort),
+		MemoryLimitMB:     nonZero(s.MemoryLimitMB),
+		CPULimit:          nonZero(s.CPULimit),
+		PidsLimit:         nonZero(s.PidsLimit),
 	}
 }
 
@@ -121,4 +137,12 @@ func optional(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+// nonZero makes zero null in JSON.
+func nonZero[T int | float64](n T) *T {
+	if n == 0 {
+		return nil
+	}
+	return &n
 }

@@ -45,6 +45,7 @@ var exitCodeNames = map[int]string{
 	exitDeployFailed:    "deploy_failed",
 	exitTimeout:         "timeout",
 	exitAlreadyBuilding: "already_building",
+	exitCheckFailed:     "check_failed",
 }
 
 func writeErrorJSON(w io.Writer, err error, code int, scopes string) {

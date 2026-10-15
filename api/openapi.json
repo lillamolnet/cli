@@ -30,6 +30,15 @@
                 "description": "Field included by default.",
                 "type": "boolean"
               },
+              "container_port": {
+                "description": "Field included by default.",
+                "type": "integer"
+              },
+              "cpu_limit": {
+                "description": "Field included by default.",
+                "format": "float",
+                "type": "number"
+              },
               "default_branch": {
                 "description": "Field included by default.",
                 "nullable": true,
@@ -40,14 +49,40 @@
                 "nullable": true,
                 "type": "string"
               },
+              "health_check_path": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "string"
+              },
+              "health_check_port": {
+                "description": "Field included by default.",
+                "nullable": true,
+                "type": "integer"
+              },
+              "health_check_type": {
+                "description": "Field included by default.",
+                "enum": [
+                  "http",
+                  "tcp"
+                ],
+                "type": "string"
+              },
               "inserted_at": {
                 "description": "Field included by default.",
                 "format": "date-time",
                 "type": "string"
               },
+              "memory_limit_mb": {
+                "description": "Field included by default.",
+                "type": "integer"
+              },
               "name": {
                 "description": "Field included by default.",
                 "type": "string"
+              },
+              "pids_limit": {
+                "description": "Field included by default.",
+                "type": "integer"
               },
               "repo_url": {
                 "description": "Field included by default.",
@@ -88,6 +123,11 @@
               "subdomain",
               "repo_url",
               "auto_deploy_enabled",
+              "container_port",
+              "health_check_type",
+              "memory_limit_mb",
+              "cpu_limit",
+              "pids_limit",
               "inserted_at",
               "updated_at"
             ],
@@ -560,12 +600,12 @@
             "schema": {
               "additionalProperties": true,
               "example": {
-                "app": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url"
+                "app": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url,container_port,health_check_path,health_check_type,health_check_port,memory_limit_mb,cpu_limit,pids_limit"
               },
               "properties": {
                 "app": {
                   "description": "Comma separated field names for app",
-                  "example": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url",
+                  "example": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url,container_port,health_check_path,health_check_type,health_check_port,memory_limit_mb,cpu_limit,pids_limit",
                   "type": "string"
                 }
               },
@@ -1135,12 +1175,12 @@
             "schema": {
               "additionalProperties": true,
               "example": {
-                "app": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url"
+                "app": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url,container_port,health_check_path,health_check_type,health_check_port,memory_limit_mb,cpu_limit,pids_limit"
               },
               "properties": {
                 "app": {
                   "description": "Comma separated field names for app",
-                  "example": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url",
+                  "example": "name,subdomain,description,repo_url,default_branch,auto_deploy_enabled,auto_deploy_branch,stopped_at,stopped_by,inserted_at,updated_at,url,container_port,health_check_path,health_check_type,health_check_port,memory_limit_mb,cpu_limit,pids_limit",
                   "type": "string"
                 }
               },

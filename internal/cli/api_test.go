@@ -5,9 +5,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
+
+// fixtures is absolute, since some tests change the working directory.
+var fixtures, _ = filepath.Abs("../api/testdata")
 
 // apiServer serves fixture files from internal/api/testdata by path, and
 // answers other paths with status.
@@ -18,7 +22,7 @@ func apiServer(t *testing.T, routes map[string]string, status int, body string) 
 		w.Header().Set("Content-Type", "application/vnd.api+json")
 
 		if fixture, ok := routes[r.URL.Path]; ok {
-			data, err := os.ReadFile("../api/testdata/" + fixture)
+			data, err := os.ReadFile(filepath.Join(fixtures, fixture))
 			if err != nil {
 				t.Error(err)
 			}

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/lillamolnet/cli/internal/api"
 )
 
 // The apps list has Bakery with the same id as the status fixture.
@@ -31,6 +33,9 @@ func TestStatus(t *testing.T) {
 			"failed, 2026-10-02 10:00 UTC, commit def5678, branch main",
 			"mix compile failed",
 			"deployed, 2026-10-01 10:03 UTC, commit abc1234",
+			"Port:           4000\n",
+			"Health check:   http /health\n",
+			"Limits:         512 MB memory, 1 CPU, 256 processes\n",
 		} {
 			if !strings.Contains(stdout, want) {
 				t.Errorf("%s: stdout has no %q:\n%s", ref, want, stdout)
@@ -56,6 +61,14 @@ func TestStatusJSON(t *testing.T) {
 
 	if got.App["subdomain"] != "bakery" || got.App["url"] != "https://bakery.lillamolnet.se" {
 		t.Errorf("app = %v", got.App)
+	}
+
+	settings := map[string]any{"container_port": 4000.0, "health_check_type": "http", "health_check_path": "/health",
+		"health_check_port": nil, "memory_limit_mb": 512.0, "cpu_limit": 1.0, "pids_limit": 256.0}
+	for key, want := range settings {
+		if value, ok := got.App[key]; !ok || value != want {
+			t.Errorf("app.%s = %v, want %v", key, value, want)
+		}
 	}
 
 	wantBuild := map[string]any{
@@ -103,4 +116,29 @@ func TestStatusNeedsOneApp(t *testing.T) {
 
 func TestStatusErrors(t *testing.T) {
 	testAPIErrors(t, "status", "bakery")
+}
+
+func TestDescribeSettings(t *testing.T) {
+	cases := map[string]api.Settings{
+		"http /":        {ContainerPort: 4000, HealthCheckType: "http"},
+		"http /healthz": {ContainerPort: 4000, HealthCheckType: "http", HealthCheckPath: "/healthz"},
+		"tcp":           {ContainerPort: 5000, HealthCheckType: "tcp", HealthCheckPort: 5000},
+		"tcp 5027":      {ContainerPort: 4000, HealthCheckType: "tcp", HealthCheckPort: 5027},
+	}
+	for want, s := range cases {
+		if got := describeHealthCheck(s); got != want {
+			t.Errorf("describeHealthCheck(%+v) = %q, want %q", s, got, want)
+		}
+	}
+
+	limits := map[string]api.Settings{
+		"512 MB memory, 1 CPU, 256 processes":    {MemoryLimitMB: 512, CPULimit: 1, PidsLimit: 256},
+		"1024 MB memory, 0.5 CPU, 100 processes": {MemoryLimitMB: 1024, CPULimit: 0.5, PidsLimit: 100},
+		"2048 MB memory, 2 CPUs, 512 processes":  {MemoryLimitMB: 2048, CPULimit: 2, PidsLimit: 512},
+	}
+	for want, s := range limits {
+		if got := describeLimits(s); got != want {
+			t.Errorf("describeLimits(%+v) = %q, want %q", s, got, want)
+		}
+	}
 }

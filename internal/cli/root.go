@@ -25,6 +25,8 @@ const (
 	exitDeployFailed    = 8
 	exitTimeout         = 9
 	exitAlreadyBuilding = 10
+	// check
+	exitCheckFailed = 11
 )
 
 // usageError is a mistake in how the command was called, such as an unknown
@@ -109,7 +111,8 @@ func newRootCommand(opts *options) *cobra.Command {
 			"Every command takes --json for output that scripts and agents can parse. When\n" +
 			"a command fails, --json prints {\"error\": {\"code\", \"message\", \"exit_code\"}}.\n" +
 			"The exit codes: lillamolnet help exit-codes\n" +
-			"For coding agents: lillamolnet help agents",
+			"For coding agents: lillamolnet help agents\n" +
+			"What a repository needs: lillamolnet help requirements",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Args: func(_ *cobra.Command, args []string) error {
@@ -138,7 +141,7 @@ func newRootCommand(opts *options) *cobra.Command {
 		commands  []*cobra.Command
 	}{
 		{"apps", "Apps:", []*cobra.Command{
-			newAppsCommand(opts), newStatusCommand(opts), newDeployCommand(opts),
+			newAppsCommand(opts), newStatusCommand(opts), newCheckCommand(opts), newDeployCommand(opts),
 			newStopCommand(opts), newStartCommand(opts),
 		}},
 		{"builds", "Builds and logs:", []*cobra.Command{
@@ -161,6 +164,11 @@ func newRootCommand(opts *options) *cobra.Command {
 		Use:   "agents",
 		Short: "How a coding agent deploys and debugs with lillamolnet",
 		Long:  agentsHelp,
+	})
+	root.AddCommand(&cobra.Command{
+		Use:   "requirements",
+		Short: "What the platform expects of a repository",
+		Long:  requirementsHelp,
 	})
 	root.AddCommand(&cobra.Command{
 		Use:   "exit-codes",
@@ -204,7 +212,8 @@ const exitCodeHelp = "Exit codes:\n" +
 	"  7   deploy --wait: the build failed\n" +
 	"  8   deploy --wait: the deploy failed\n" +
 	"  9   deploy --wait: gave up after --timeout. The build goes on\n" +
-	"  10  deploy: a build is already queued or running, so none was started"
+	"  10  deploy: a build is already queued or running, so none was started\n" +
+	"  11  check: a check failed"
 
 // appArgHelp says what <app> is. Every command that takes one gets it, so
 // that the explanation is the same everywhere.

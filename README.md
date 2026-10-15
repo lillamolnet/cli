@@ -44,7 +44,8 @@ it: `my-blog` for `https://my-blog.lillamolnet.se`. Its id or name works too.
 | `lillamolnet logout` | Revokes the saved key and removes it |
 | `lillamolnet whoami` | Shows the user and the API key in use, with its scopes and expiry |
 | `lillamolnet apps` | Lists your apps, newest first |
-| `lillamolnet status <app>` | Shows an app with its latest build and latest deploy. `<app>` is the subdomain, id or name |
+| `lillamolnet status <app>` | Shows an app with its port, health check and limits, and its latest build and latest deploy. `<app>` is the subdomain, id or name |
+| `lillamolnet check [<app>]` | Checks that the repository in the current directory can be deployed, without deploying it. Without `<app>`, the app is found from the git remote. `--build` also builds and runs the image with Docker, and `--env-file` gives it env variables |
 | `lillamolnet builds <app>` | Lists an app's builds, newest first. `--limit` sets how many, at most 100 |
 | `lillamolnet build-logs <build>` | Prints a build's log. `<build>` is a build id, from `builds` or `status` |
 | `lillamolnet deploy <app> [--wait]` | Builds and deploys an app, like the Deploy button. `--wait` follows it to the end, for at most `--timeout` (default 30m) |
@@ -98,11 +99,11 @@ error is also printed as text on stderr:
 ```
 
 `code` names the exit code: `error`, `usage`, `auth`, `forbidden`, `not_found`,
-`unreachable`, `build_failed`, `deploy_failed`, `timeout` or `already_building`.
-`http_status` is there when the API refused the call, and `required_scopes`
-when the key lacks a scope. `deploy --wait` prints its result instead when the
-build or the deploy fails, or the wait times out, since the result already says
-how it went.
+`unreachable`, `build_failed`, `deploy_failed`, `timeout`, `already_building` or
+`check_failed`. `http_status` is there when the API refused the call, and
+`required_scopes` when the key lacks a scope. `deploy --wait` prints its result
+instead when the build or the deploy fails, or the wait times out, and `check`
+when a check fails, since the result already says how it went.
 
 `logs` prints notes on stderr, never on stdout: when `--limit` cut older lines,
 and when there were no lines at all. New lines can take up to a minute to show
@@ -136,6 +137,13 @@ printf %s "$DATABASE_URL" | lillamolnet env set myapp DATABASE_URL --yes
 `apps --json` is an array, newest first. `stopped` is the state you asked for,
 not whether the container runs right now. `stopped_by` is `user` or `platform`.
 
+The last seven fields are how the platform runs the app. `container_port` is
+the port the app must listen on, and the value of `PORT`. `health_check_type`
+is `http` or `tcp`. An `http` check asks for `health_check_path`, or `/` when
+it is `null`, and a `tcp` check connects to `health_check_port`, or to
+`container_port` when it is `null`. The limits are set by the platform. The
+seven are `null` from a version of the API that does not have them.
+
 ```json
 [
   {
@@ -152,7 +160,14 @@ not whether the container runs right now. `stopped_by` is `user` or `platform`.
     "stopped_at": "2026-10-05T12:30:00Z",
     "stopped_by": "user",
     "created_at": "2026-09-01T10:00:00Z",
-    "updated_at": "2026-10-05T12:30:00Z"
+    "updated_at": "2026-10-05T12:30:00Z",
+    "container_port": 4000,
+    "health_check_type": "tcp",
+    "health_check_path": null,
+    "health_check_port": 5000,
+    "memory_limit_mb": 1024,
+    "cpu_limit": 0.5,
+    "pids_limit": 256
   }
 ]
 ```
@@ -183,6 +198,27 @@ an app that has never been built.
     "finished_at": "2026-10-01T10:03:40Z",
     "build": { "id": "556cad24-fb5f-4ece-903c-3c534f7126d5", "status": "success", "commit": "abc1234def", "...": "..." }
   }
+}
+```
+
+`check --json` has the app's subdomain, or `null` when no app deploys the
+repository, the settings it was checked against, in the same format as in
+`apps --json`, and the checks. `status` is `ok`, `warning` or `error`, and `ok`
+is `false` when a check is an error. Then check exits with 11. The names of
+the checks are `app`, `git`, `branch`, `pushed`, `dockerfile`, `port`,
+`command`, `labels` and `build_args`, and with `--build` also `docker`,
+`build`, `image_labels`, `run` and `health_check`. A check that does not apply
+is left out.
+
+```json
+{
+  "app": "bakery",
+  "settings": { "container_port": 4000, "health_check_type": "http", "health_check_path": "/health", "...": "..." },
+  "ok": false,
+  "checks": [
+    { "name": "dockerfile", "status": "ok", "message": "Dockerfile in the repository root" },
+    { "name": "port", "status": "error", "message": "EXPOSE 80, but the platform sends traffic to port 4000. ..." }
+  ]
 }
 ```
 
@@ -251,6 +287,46 @@ in the same format as `apps --json`. `result` is `stopped`, `started`,
 | 8 | `deploy --wait`: the deploy failed |
 | 9 | `deploy --wait`: gave up waiting after `--timeout`. The build goes on |
 | 10 | `deploy`: a build of the app is already queued or running, so no new one was started |
+| 11 | `check`: a check failed |
+
+## Repository requirements
+
+`lillamolnet help requirements` prints this. `lillamolnet check` tests the
+repository you are in against it, and `lillamolnet check --build` also builds and
+runs the image with Docker, as the platform does.
+
+```text
+What the platform expects of a repository. lillamolnet check tests the
+repository you are in against it, without deploying.
+
+Build:
+  - A Dockerfile in the root of the repository. The root is the build
+    context. No other path or directory is supported.
+  - The platform runs docker build . without build args. Env variables are
+    only set when the container starts, so a build that needs one, such as
+    DATABASE_URL, fails.
+  - No labels that start with traefik. or spwnr. The image is rejected.
+
+Run:
+  - Listen on $PORT, on all interfaces (0.0.0.0). PORT is the app's port,
+    4000 unless another one is chosen. An image that listens on port 80 does
+    not work without a change.
+  - The container runs with --cap-drop=ALL and only CHOWN, SETUID, SETGID
+    and NET_BIND_SERVICE added back, and with no-new-privileges.
+  - Limits: 512 MB memory without swap, 1 CPU and 256 processes, unless the
+    platform has set others for the app.
+
+Health check:
+  - Within 60 s, an answer below 500 on /, or 2xx on the app's health check
+    path when it has one. The request has X-Forwarded-Proto: https, so a
+    redirect to https does not pass on a path of its own.
+  - With a tcp health check, it is enough that the port accepts a
+    connection.
+  - Then the container must keep running for 10 s without a restart, and
+    answer again.
+
+lillamolnet status <app> shows the app's port, health check and limits.
+```
 
 ## For coding agents
 
@@ -261,6 +337,7 @@ Workflow:
   lillamolnet whoami --json            who is logged in, and the key's scopes
   lillamolnet apps --json              the apps. <app> is the subdomain
   lillamolnet status <app> --json      latest build and deploy, with commit
+  lillamolnet check --json             whether the repo here can be deployed
   lillamolnet deploy <app> --wait      build and deploy, and wait for the result
   lillamolnet build-logs <build>       the log of a build, for a failed one
   lillamolnet logs <app> --since 15m   the app's own logs
@@ -277,12 +354,20 @@ Output:
   The exit code says what happened: lillamolnet help exit-codes.
 
 Scopes:
-  read        apps, status, builds, build-logs, env (names only)
+  read        apps, status, check, builds, build-logs, env (names only)
   deploy      deploy, stop and start, together with read
   logs:read   logs. Also read, unless <app> is the app's id
   env:write   env set and env unset, together with read
   Exit code 4 means the key lacks one. The user creates a new key with
   lillamolnet login.
+
+Repository:
+  lillamolnet help requirements lists what the platform expects of a
+  repository: a Dockerfile in the root, an app that listens on $PORT, and a
+  health check that passes. check tests the repo you are in against it and
+  changes nothing. check --build also builds and runs the image with local
+  Docker, with the platform's flags and health check. check exits with 11 when
+  a check is an error.
 
 Good to know:
   - deploy --wait exits 0 when the new version is live, 7 when the build

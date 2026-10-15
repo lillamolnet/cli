@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -128,6 +129,11 @@ func printStatus(out io.Writer, status api.AppStatus) error {
 	}
 	fmt.Fprintf(w, "State:\t%s\n", state(app))
 	fmt.Fprintf(w, "Repo:\t%s\n", app.RepoURL)
+	if s := app.Settings; s.ContainerPort != 0 {
+		fmt.Fprintf(w, "Port:\t%d\n", s.ContainerPort)
+		fmt.Fprintf(w, "Health check:\t%s\n", describeHealthCheck(s))
+		fmt.Fprintf(w, "Limits:\t%s\n", describeLimits(s))
+	}
 
 	if b := status.LatestBuild; b != nil {
 		fmt.Fprintf(w, "Latest build:\t%s\n", describeBuild(b))
@@ -152,6 +158,31 @@ func printStatus(out io.Writer, status api.AppStatus) error {
 	}
 
 	return w.Flush()
+}
+
+// describeHealthCheck says what a deploy waits for: "http /health", "http /",
+// "tcp" or "tcp 5000". A tcp check has its own port only when it differs
+// from the container port.
+func describeHealthCheck(s api.Settings) string {
+	if s.HealthCheckType == "tcp" {
+		if s.HealthCheckPort != 0 && s.HealthCheckPort != s.ContainerPort {
+			return fmt.Sprintf("tcp %d", s.HealthCheckPort)
+		}
+		return "tcp"
+	}
+	if s.HealthCheckPath == "" {
+		return "http /"
+	}
+	return "http " + s.HealthCheckPath
+}
+
+// describeLimits is "512 MB memory, 1 CPU, 256 processes".
+func describeLimits(s api.Settings) string {
+	cpus := strconv.FormatFloat(s.CPULimit, 'f', -1, 64) + " CPU"
+	if s.CPULimit > 1 {
+		cpus += "s"
+	}
+	return fmt.Sprintf("%d MB memory, %s, %d processes", s.MemoryLimitMB, cpus, s.PidsLimit)
 }
 
 func describeBuild(b *api.Build) string {

@@ -24,6 +24,26 @@ type App struct {
 	StoppedBy  string
 	InsertedAt time.Time
 	UpdatedAt  time.Time
+	// Settings are zero from a version of the API before October 2026, which
+	// did not have them.
+	Settings Settings
+}
+
+// Settings are how the platform runs an app: the port it sends traffic to,
+// the health check and the resource limits. The user cannot change the
+// limits.
+type Settings struct {
+	// ContainerPort is the port the app must listen on, and the value of PORT.
+	ContainerPort int
+	// HealthCheckType is http or tcp.
+	HealthCheckType string
+	// HealthCheckPath is empty when the http check asks for /.
+	HealthCheckPath string
+	// HealthCheckPort is the port of a tcp check, or zero for ContainerPort.
+	HealthCheckPort int
+	MemoryLimitMB   int
+	CPULimit        float64
+	PidsLimit       int
 }
 
 type appAttributes struct {
@@ -39,6 +59,13 @@ type appAttributes struct {
 	StoppedBy         *string  `json:"stopped_by"`
 	InsertedAt        apiTime  `json:"inserted_at"`
 	UpdatedAt         apiTime  `json:"updated_at"`
+	ContainerPort     int      `json:"container_port"`
+	HealthCheckType   string   `json:"health_check_type"`
+	HealthCheckPath   *string  `json:"health_check_path"`
+	HealthCheckPort   *int     `json:"health_check_port"`
+	MemoryLimitMB     int      `json:"memory_limit_mb"`
+	CPULimit          float64  `json:"cpu_limit"`
+	PidsLimit         int      `json:"pids_limit"`
 }
 
 // Apps returns the user's apps, newest first.
@@ -70,6 +97,17 @@ func toApp(r resource[appAttributes]) App {
 		StoppedBy:         deref(a.StoppedBy),
 		InsertedAt:        a.InsertedAt.Time,
 		UpdatedAt:         a.UpdatedAt.Time,
+		Settings: Settings{
+			ContainerPort:   a.ContainerPort,
+			HealthCheckType: a.HealthCheckType,
+			HealthCheckPath: deref(a.HealthCheckPath),
+			MemoryLimitMB:   a.MemoryLimitMB,
+			CPULimit:        a.CPULimit,
+			PidsLimit:       a.PidsLimit,
+		},
+	}
+	if a.HealthCheckPort != nil {
+		app.Settings.HealthCheckPort = *a.HealthCheckPort
 	}
 	if a.StoppedAt != nil {
 		stopped := a.StoppedAt.Time

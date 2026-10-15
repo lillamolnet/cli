@@ -61,6 +61,13 @@ func TestAppsJSON(t *testing.T) {
 		"stopped_by":          "user",
 		"created_at":          "2026-09-01T10:00:00Z",
 		"updated_at":          "2026-10-05T12:30:00Z",
+		"container_port":      4000.0,
+		"health_check_type":   "tcp",
+		"health_check_path":   nil,
+		"health_check_port":   5000.0,
+		"memory_limit_mb":     1024.0,
+		"cpu_limit":           0.5,
+		"pids_limit":          256.0,
 	}
 	if !jsonEqual(got[1], want) {
 		t.Errorf("got  %v\nwant %v", got[1], want)
