@@ -210,10 +210,51 @@ func TestSameRepo(t *testing.T) {
 
 func TestRunArgs(t *testing.T) {
 	got := strings.Join(runArgs("c", "img", defaultSettings, ".env"), " ")
-	want := "run -d --restart unless-stopped --name c -p 127.0.0.1::4000 --memory=512m --memory-swap=512m " +
+	want := "run -d --name c -p 127.0.0.1::4000 --memory=512m --memory-swap=512m " +
 		"--cpus=1 --pids-limit=256 --security-opt no-new-privileges --cap-drop=ALL --cap-add=CHOWN " +
 		"--cap-add=SETUID --cap-add=SETGID --cap-add=NET_BIND_SERVICE --env-file .env -e PORT=4000 img"
 	if got != want {
 		t.Errorf("runArgs =\n%s\nwant\n%s", got, want)
+	}
+}
+
+func TestCheckWithoutRemote(t *testing.T) {
+	gitRepo(t, "", map[string]string{"Dockerfile": "FROM node\nEXPOSE 4000\n"})
+
+	_, out, _ := runCheckJSON(t, "bakery")
+	for _, c := range out.Checks {
+		if c.Name == "pushed" && (c.Status != checkWarning || !strings.HasPrefix(c.Message, "no git remote origin")) {
+			t.Errorf("pushed = %+v", c)
+		}
+	}
+}
+
+func TestConnectPortAndHealth(t *testing.T) {
+	exposed := checkItem{"port", checkWarning, "EXPOSE 3000, but the platform sends traffic to port 4000"}
+	healthy := checkItem{"health_check", checkOK, "answered 200 on /"}
+	silent := checkItem{"health_check", checkError, "no answer that passes within 60 s"}
+
+	got := connectPortAndHealth([]checkItem{exposed, healthy}, defaultSettings)
+	if got[0].Status != checkOK || !strings.Contains(got[0].Message, "answers on $PORT (4000)") {
+		t.Errorf("an answer should settle the port: %+v", got[0])
+	}
+
+	got = connectPortAndHealth([]checkItem{exposed, silent}, defaultSettings)
+	if got[0].Status != checkWarning || !strings.Contains(got[1].Message, "likely cause is what port found: EXPOSE 3000") {
+		t.Errorf("no answer should point to the port: %+v", got)
+	}
+
+	// A tcp check on another port says nothing about the app's port.
+	tcp := defaultSettings
+	tcp.HealthCheckType, tcp.HealthCheckPort = "tcp", 5027
+	got = connectPortAndHealth([]checkItem{exposed, healthy}, tcp)
+	if got[0].Status != checkWarning {
+		t.Errorf("port = %+v", got[0])
+	}
+
+	// Without --build there is nothing to connect.
+	got = connectPortAndHealth([]checkItem{exposed}, defaultSettings)
+	if got[0] != exposed {
+		t.Errorf("port = %+v", got[0])
 	}
 }

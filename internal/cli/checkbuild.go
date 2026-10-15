@@ -39,6 +39,8 @@ type buildOptions struct {
 	settings api.Settings
 	envKeys  []string
 	envFile  string
+	// dockerfileLabels are the forbidden labels found in the Dockerfile.
+	dockerfileLabels []string
 	// progress gets what check is doing, since a build takes a while.
 	progress io.Writer
 }
@@ -64,12 +66,12 @@ func buildChecks(parent context.Context, o buildOptions) []checkItem {
 	}
 	checks := []checkItem{{"build", checkOK, "docker build . succeeded"}}
 
-	checks = append(checks, imageLabelCheck(ctx, tag))
+	checks = append(checks, imageLabelCheck(ctx, tag, o.dockerfileLabels))
 	checks = append(checks, runCheck(ctx, cleanup, tag, o)...)
 	return checks
 }
 
-func imageLabelCheck(ctx context.Context, tag string) checkItem {
+func imageLabelCheck(ctx context.Context, tag string, dockerfileLabels []string) checkItem {
 	out, err := docker(ctx, "", "image", "inspect", "-f", "{{json .Config.Labels}}", tag)
 	if err != nil {
 		return checkItem{"image_labels", checkError, "docker image inspect failed: " + lastLines(out, 3)}
@@ -85,21 +87,35 @@ func imageLabelCheck(ctx context.Context, tag string) checkItem {
 	}
 	slices.Sort(keys)
 
-	if forbidden := forbiddenLabels(keys); len(forbidden) > 0 {
-		return checkItem{"image_labels", checkError, fmt.Sprintf("the image has the labels %s, from the "+
-			"Dockerfile or its base image. The platform rejects an image with labels that start with traefik. or spwnr.",
-			strings.Join(forbidden, ", "))}
+	// Labels that the labels check already found in the Dockerfile are one
+	// problem, not two.
+	var fromBase []string
+	for _, key := range forbiddenLabels(keys) {
+		if !slices.Contains(dockerfileLabels, key) {
+			fromBase = append(fromBase, key)
+		}
 	}
-	return checkItem{"image_labels", checkOK, "the image has no labels that the platform controls"}
+	switch {
+	case len(fromBase) > 0:
+		return checkItem{"image_labels", checkError, fmt.Sprintf("the image has the labels %s from its base "+
+			"image. The platform rejects an image with labels that start with traefik. or spwnr.",
+			strings.Join(fromBase, ", "))}
+	case len(dockerfileLabels) > 0:
+		return checkItem{"image_labels", checkOK, "no labels that the platform controls besides those in the " +
+			"Dockerfile, which labels reports"}
+	default:
+		return checkItem{"image_labels", checkOK, "the image has no labels that the platform controls"}
+	}
 }
 
 // runArgs are the platform's flags for docker run: PORT, the limits without
-// swap, the capabilities and the restart policy, kept the same as the
-// platform's. Locally, the port is published on 127.0.0.1 instead of on the
-// platform's network.
+// swap and the capabilities, kept the same as the platform's. Locally, the
+// port is published on 127.0.0.1 instead of on the platform's network, and
+// there is no restart policy: a restart fails the platform's health check
+// anyway, and without one the exit code of a container that stops is kept.
 func runArgs(name, tag string, s api.Settings, envFile string) []string {
 	memory := strconv.Itoa(s.MemoryLimitMB) + "m"
-	args := []string{"run", "-d", "--restart", "unless-stopped", "--name", name,
+	args := []string{"run", "-d", "--name", name,
 		"-p", "127.0.0.1::" + strconv.Itoa(probePort(s)),
 		"--memory=" + memory, "--memory-swap=" + memory,
 		"--cpus=" + strconv.FormatFloat(s.CPULimit, 'f', -1, 64),
@@ -132,8 +148,20 @@ func runCheck(ctx, cleanup context.Context, tag string, o buildOptions) []checkI
 	}
 	defer docker(cleanup, "", "rm", "-f", name)
 
+	// A container that stops at once has no published port, so docker port
+	// fails. Its state says why.
+	stopped := func() []checkItem {
+		return []checkItem{{"run", checkError, "the container stopped right after it started: " +
+			containerState(ctx, name).String() + failureHints(ctx, name, o)}}
+	}
+	if !containerState(ctx, name).running() {
+		return stopped()
+	}
 	out, err := docker(ctx, "", "port", name, strconv.Itoa(probePort(s))+"/tcp")
 	if err != nil {
+		if !containerState(ctx, name).running() {
+			return stopped()
+		}
 		return []checkItem{{"run", checkError, "docker port failed: " + lastLines(out, 3)}}
 	}
 	// One line per address, such as 127.0.0.1:55012.
@@ -273,7 +301,9 @@ type containerStatus struct {
 	exitCode  int
 }
 
-func (s containerStatus) running() bool { return s.known && s.isRunning && s.restarts == 0 }
+func (s containerStatus) running() bool {
+	return s.known && s.isRunning && s.restarts == 0
+}
 
 func (s containerStatus) String() string {
 	switch {

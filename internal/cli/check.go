@@ -139,13 +139,16 @@ func newCheckCommand(opts *options) *cobra.Command {
 			if df != nil {
 				checks = append(checks, dockerfileChecks(*df, settings, envKeys)...)
 				if build {
+					final, _ := df.final()
 					checks = append(checks, buildChecks(ctx, buildOptions{
-						root:     repo.root,
-						settings: settings,
-						envKeys:  envKeys,
-						envFile:  envFile,
-						progress: opts.stderr,
+						root:             repo.root,
+						settings:         settings,
+						envKeys:          envKeys,
+						envFile:          envFile,
+						dockerfileLabels: forbiddenLabels(labelKeys(final)),
+						progress:         opts.stderr,
 					})...)
+					checks = connectPortAndHealth(checks, settings)
 				}
 			}
 
@@ -380,6 +383,11 @@ func repoChecks(r repo, app *api.App) []checkItem {
 		}
 	}
 
+	if r.remote == "" {
+		return append(checks, checkItem{"pushed", checkWarning, "no git remote origin. The platform builds an " +
+			"app's repository on GitHub, so a deploy needs this one pushed there"})
+	}
+
 	var notPushed []string
 	if r.dirty {
 		notPushed = append(notPushed, "uncommitted changes")
@@ -495,6 +503,27 @@ func dockerfileChecks(df dockerfile, s api.Settings, envKeys []string) []checkIt
 		labelCheck(final),
 		buildArgCheck(df, envKeys),
 	}
+}
+
+// connectPortAndHealth joins what the Dockerfile suggests about the port
+// with what --build showed. An answer on the app's port settles the port
+// check. Without an answer, a problem the port check found is the likely
+// cause.
+func connectPortAndHealth(checks []checkItem, s api.Settings) []checkItem {
+	port := slices.IndexFunc(checks, func(c checkItem) bool { return c.Name == "port" })
+	health := slices.IndexFunc(checks, func(c checkItem) bool { return c.Name == "health_check" })
+	if port < 0 || health < 0 || checks[port].Status == checkOK {
+		return checks
+	}
+
+	switch {
+	case checks[health].Status == checkOK && probePort(s) == s.ContainerPort:
+		checks[port] = checkItem{"port", checkOK, fmt.Sprintf("the app answers on $PORT (%d), "+
+			"as health_check shows, whatever the Dockerfile says", s.ContainerPort)}
+	case checks[health].Status != checkOK:
+		checks[health].Message += "\nThe likely cause is what port found: " + checks[port].Message
+	}
+	return checks
 }
 
 func portCheck(final []instruction, image string, s api.Settings) checkItem {
