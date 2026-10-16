@@ -40,12 +40,14 @@ func newAppsCommand(opts *options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "apps",
 		Example: "  lillamolnet apps\n" +
-			"  lillamolnet apps --json | jq -r '.[].subdomain'",
+			"  lillamolnet apps --json | jq -r '.[].subdomain'\n" +
+			"  lillamolnet apps create --yes",
 		Annotations: map[string]string{scopeAnnotation: "read"},
-		Short:       "List your apps",
+		Short:       "List your apps, and create one with apps create",
 		Long: "List your apps, newest first. Use the subdomain in the first column with the\n" +
 			"other commands.\n\n" +
-			"STATE is the state you asked for: started, or stopped by you or by the platform.",
+			"STATE is the state you asked for: started, or stopped by you or by the platform.\n\n" +
+			"lillamolnet apps create makes a new app from the GitHub repository you are in.",
 		Args: noArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			client, err := opts.client()

@@ -190,7 +190,13 @@ const intro = "this is the command line interface for lilla molnet\n\n" +
 	"  lillamolnet login\n" +
 	"  lillamolnet apps\n" +
 	"  lillamolnet status my-blog\n" +
-	"  lillamolnet deploy my-blog --wait"
+	"  lillamolnet deploy my-blog --wait\n\n" +
+	"A new app, from the GitHub repository you are in:\n" +
+	"  lillamolnet apps create\n" +
+	"  lillamolnet check --build\n" +
+	"  lillamolnet deploy my-blog --wait\n" +
+	"The Lilla Molnet GitHub app must be installed on the repository first, from\n" +
+	"https://lillamolnet.se/apps/new."
 
 // printIntro is lillamolnet without arguments: the banner in a terminal, how
 // to get started, and where the rest is. The full help is in --help.
