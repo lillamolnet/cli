@@ -37,7 +37,7 @@ type appJSON struct {
 }
 
 func newAppsCommand(opts *options) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use: "apps",
 		Example: "  lillamolnet apps\n" +
 			"  lillamolnet apps --json | jq -r '.[].subdomain'",
@@ -80,6 +80,9 @@ func newAppsCommand(opts *options) *cobra.Command {
 			return w.Flush()
 		},
 	}
+
+	cmd.AddCommand(newAppsCreateCommand(opts))
+	return cmd
 }
 
 func toAppJSON(app api.App) appJSON {

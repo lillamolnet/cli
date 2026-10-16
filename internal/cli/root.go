@@ -27,6 +27,9 @@ const (
 	exitAlreadyBuilding = 10
 	// check
 	exitCheckFailed = 11
+	// apps create, env set: the API refused because of a conflict, such as a
+	// taken subdomain
+	exitConflict = 12
 )
 
 // usageError is a mistake in how the command was called, such as an unknown
@@ -213,7 +216,9 @@ const exitCodeHelp = "Exit codes:\n" +
 	"  8   deploy --wait: the deploy failed\n" +
 	"  9   deploy --wait: gave up after --timeout. The build goes on\n" +
 	"  10  deploy: a build is already queued or running, so none was started\n" +
-	"  11  check: a check failed"
+	"  11  check: a check failed\n" +
+	"  12  apps create: the subdomain is taken. env set: a secret variable cannot\n" +
+	"      become plain"
 
 // appArgHelp says what <app> is. Every command that takes one gets it, so
 // that the explanation is the same everywhere.

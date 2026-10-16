@@ -1,0 +1,16 @@
+{
+  "errors": [
+    {
+      "code": "repo_not_reachable",
+      "detail": "None of your GitHub integrations reaches the repository. Install the GitHub app on it from the dashboard, then try again",
+      "meta": {
+        "install_url": "https://lillamolnet.se/apps/new"
+      },
+      "source": {
+        "pointer": "/data/attributes/repo_id"
+      },
+      "status": "422",
+      "title": "Repository Not Reachable"
+    }
+  ]
+}

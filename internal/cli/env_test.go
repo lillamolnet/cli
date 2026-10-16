@@ -205,15 +205,16 @@ func TestEnvSetRefused(t *testing.T) {
 		status  int
 		fixture string
 		stderr  string
+		code    int
 	}{
-		{409, "env_conflict.json", "A secret variable cannot become a plain one"},
-		{422, "env_invalid.json", "key has invalid format"},
+		{409, "env_conflict.json", "A secret variable cannot become a plain one", exitConflict},
+		{422, "env_invalid.json", "key has invalid format", exitError},
 	} {
 		s := newEnvServer(t, tc.status, tc.fixture, 204)
 
 		code, _, stderr := runWithAPI(t, s.url, "env", "set", "bakery", "KEY=the-value", "--yes")
 
-		if code != exitError || !strings.Contains(stderr, tc.stderr) || strings.Contains(stderr, "the-value") {
+		if code != tc.code || !strings.Contains(stderr, tc.stderr) || strings.Contains(stderr, "the-value") {
 			t.Errorf("%d: exit code = %d, stderr %q", tc.status, code, stderr)
 		}
 	}

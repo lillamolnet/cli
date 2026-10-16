@@ -1,0 +1,35 @@
+{
+  "data": [
+    {
+      "attributes": {
+        "clone_url": "https://github.com/example/Bakery.git",
+        "default_branch": "main",
+        "full_name": "example/Bakery",
+        "integration_id": "4b9f4d2e-2b8c-4c3e-9a51-0a7d1f6c2e11",
+        "private": true
+      },
+      "id": "731",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "repository"
+    },
+    {
+      "attributes": {
+        "clone_url": "https://github.com/example/Bakery.git",
+        "default_branch": "main",
+        "full_name": "example/Bakery",
+        "integration_id": "9d0c1a77-5e3f-4f0b-8c2d-6b1e2f3a4c55",
+        "private": true
+      },
+      "id": "731",
+      "links": {},
+      "meta": {},
+      "relationships": {},
+      "type": "repository"
+    }
+  ],
+  "jsonapi": {
+    "version": "1.0"
+  }
+}

@@ -44,6 +44,7 @@ it: `my-blog` for `https://my-blog.lillamolnet.se`. Its id or name works too.
 | `lillamolnet logout` | Revokes the saved key and removes it |
 | `lillamolnet whoami` | Shows the user and the API key in use, with its scopes and expiry |
 | `lillamolnet apps` | Lists your apps, newest first |
+| `lillamolnet apps create` | Creates an app from the GitHub repository you are in, or the one in `--repo owner/repo`. The platform chooses the servers. `--name` and `--subdomain` default to the repository's name, and `--auto-deploy` deploys every push to the default branch, or to `--auto-deploy=<branch>`. The app is not deployed |
 | `lillamolnet status <app>` | Shows an app with its port, health check and limits, and its latest build and latest deploy. `<app>` is the subdomain, id or name |
 | `lillamolnet check [<app>]` | Checks that the repository in the current directory can be deployed, without deploying it. Without `<app>`, the app is found from the git remote. `--build` also builds and runs the image with Docker, and `--env-file` gives it env variables |
 | `lillamolnet builds <app>` | Lists an app's builds, newest first. `--limit` sets how many, at most 100 |
@@ -82,8 +83,8 @@ shells, logs and transcripts.
 
 A key has scopes. `deploy`, `stop` and `start` need `read` and `deploy`. `logs` needs `logs:read`,
 since logs may contain personal data, and also `read` unless you give the
-app's id. `env set` and `env unset` need `read` and `env:write`. `read` is enough for
-the other commands.
+app's id. `env set` and `env unset` need `read` and `env:write`. `apps create` needs `read`
+and `apps:write`. `read` is enough for the other commands.
 
 ## Output
 
@@ -99,8 +100,8 @@ error is also printed as text on stderr:
 ```
 
 `code` names the exit code: `error`, `usage`, `auth`, `forbidden`, `not_found`,
-`unreachable`, `build_failed`, `deploy_failed`, `timeout`, `already_building` or
-`check_failed`. `http_status` is there when the API refused the call, and
+`unreachable`, `build_failed`, `deploy_failed`, `timeout`, `already_building`,
+`check_failed` or `conflict`. `http_status` is there when the API refused the call, and
 `required_scopes` when the key lacks a scope. `deploy --wait` prints its result
 instead when the build or the deploy fails, or the wait times out, and `check`
 when a check fails, since the result already says how it went.
@@ -110,8 +111,8 @@ and when there were no lines at all. New lines can take up to a minute to show
 up, for example right after a deploy.
 
 The CLI never asks interactive questions when stdin is not a terminal.
-`env set`, `env unset` and `stop` ask before changing anything when stdin is a
-terminal, and need `--yes` when it is not. Give a secret on stdin rather than as an
+`apps create`, `env set`, `env unset` and `stop` ask before changing anything
+when stdin is a terminal, and need `--yes` when it is not. Give a secret on stdin rather than as an
 argument, so that it does not end up in the shell's history:
 
 ```sh
@@ -171,6 +172,9 @@ seven are `null` from a version of the API that does not have them.
   }
 ]
 ```
+
+`apps create --json` prints the new app, as one object in the same format as
+`apps --json`.
 
 `status --json` has the app, in the same format as `apps --json`, its latest
 build and its latest deploy. The latest deploy can belong to an older build
@@ -288,6 +292,7 @@ in the same format as `apps --json`. `result` is `stopped`, `started`,
 | 9 | `deploy --wait`: gave up waiting after `--timeout`. The build goes on |
 | 10 | `deploy`: a build of the app is already queued or running, so no new one was started |
 | 11 | `check`: a check failed |
+| 12 | `apps create`: the subdomain is taken, and the error names a free one. `env set`: a secret variable cannot become plain |
 
 ## Repository requirements
 
@@ -300,7 +305,8 @@ What the platform expects of a repository. lillamolnet check tests the
 repository you are in against it, without deploying.
 
 Source:
-  - The repository is on GitHub, and the app is connected to it. The
+  - The repository is on GitHub, and the app is connected to it.
+    lillamolnet apps create makes an app from the repository you are in. The
     platform builds from GitHub, never from your computer, so push before
     you deploy.
   - lillamolnet deploy and the Deploy button build the repository's default
@@ -345,6 +351,7 @@ Workflow:
   lillamolnet whoami --json            who is logged in, and the key's scopes
   lillamolnet apps --json              the apps. <app> is the subdomain
   lillamolnet status <app> --json      latest build and deploy, with commit
+  lillamolnet apps create --yes        an app from the GitHub repo here
   lillamolnet check --json             whether the repo here can be deployed
   lillamolnet deploy <app> --wait      build and deploy, and wait for the result
   lillamolnet build-logs <build>       the log of a build, for a failed one
@@ -366,6 +373,7 @@ Scopes:
   deploy      deploy, stop and start, together with read
   logs:read   logs. Also read, unless <app> is the app's id
   env:write   env set and env unset, together with read
+  apps:write  apps create, together with read
   Exit code 4 means the key lacks one. The user creates a new key with
   lillamolnet login.
 
@@ -377,6 +385,17 @@ Repository:
   image with the platform's flags and health check, which needs Docker running
   on this computer. check exits with 11 when a check is an error.
 
+New app:
+  An app is made from a GitHub repository. The user first installs the Lilla
+  Molnet GitHub app on the repository, in a browser, from
+  https://lillamolnet.se/apps/new. Then, in the repository:
+    lillamolnet apps create --yes      the platform chooses the servers
+    lillamolnet check --build          does it build, start and pass the check
+    lillamolnet deploy <app> --wait    the first deploy
+  apps create exits with 5 when no GitHub account of the user reaches the
+  repository, and with 12 when the subdomain is taken. The error then names a
+  free one for --subdomain. It never picks another subdomain by itself.
+
 Good to know:
   - deploy --wait exits 0 when the new version is live, 7 when the build
     failed and 8 when the deploy failed. build-logs shows why.
@@ -384,11 +403,11 @@ Good to know:
     a deploy. No lines is not an error.
   - logs --limit keeps the newest lines, and says on stderr when it cut any.
     --grep is case-sensitive.
-  - Without a terminal, stop, env set and env unset need --yes. Give a secret
-    on stdin: printf %s "$VALUE" | lillamolnet env set <app> KEY --yes
+  - Without a terminal, apps create, stop, env set and env unset need --yes.
+    Give a secret on stdin: printf %s "$VALUE" | lillamolnet env set <app> KEY --yes
   - Env changes take effect at the next deploy.
-  - Deploy, stop and env changes affect a live app. Ask the user first unless
-    they asked for it.
+  - Deploy, stop and env changes affect a live app, and apps create takes a
+    subdomain. Ask the user first unless they asked for it.
 ```
 
 ## Development

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -157,6 +158,9 @@ func newEnvSetCommand(opts *options) *cobra.Command {
 			}
 
 			v, result, err := client.SetEnvVar(cmd.Context(), app.ID, key, set)
+			if api.IsStatus(err, http.StatusConflict) {
+				return codeError{exitConflict, err.Error()}
+			}
 			if err != nil {
 				return err
 			}

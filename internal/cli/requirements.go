@@ -9,7 +9,8 @@ What the platform expects of a repository. lillamolnet check tests the
 repository you are in against it, without deploying.
 
 Source:
-  - The repository is on GitHub, and the app is connected to it. The
+  - The repository is on GitHub, and the app is connected to it.
+    lillamolnet apps create makes an app from the repository you are in. The
     platform builds from GitHub, never from your computer, so push before
     you deploy.
   - lillamolnet deploy and the Deploy button build the repository's default

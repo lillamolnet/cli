@@ -1,0 +1,16 @@
+{
+  "errors": [
+    {
+      "code": "subdomain_taken",
+      "detail": "The subdomain is taken",
+      "meta": {
+        "suggested_subdomain": "bakery-2"
+      },
+      "source": {
+        "pointer": "/data/attributes/subdomain"
+      },
+      "status": "409",
+      "title": "Conflict"
+    }
+  ]
+}

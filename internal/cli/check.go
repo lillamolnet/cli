@@ -320,7 +320,7 @@ func findApp(ctx context.Context, client *api.Client, ref string, r repo) (*api.
 
 	switch len(matching) {
 	case 0:
-		return noApp("no app deploys " + r.remote)
+		return noApp("no app deploys " + r.remote + ". Create one with lillamolnet apps create")
 	case 1:
 		return &matching[0], appFound(matching[0], r), nil
 	default:

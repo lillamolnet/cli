@@ -673,6 +673,121 @@
         "tags": [
           "app"
         ]
+      },
+      "post": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "Create an app from one of your repositories. Give the repository as repo_id or full_name, and integration_id only when more than one integration reaches it. The platform chooses the servers. Needs the apps:write scope. The app is not deployed. A taken subdomain is 409 with a free one in errors[0].meta.suggested_subdomain. A repository that no integration reaches is 422 with errors[0].meta.install_url, and one that several reach is 422 with them in errors[0].meta.integrations. When no server has room the answer is 503.",
+        "operationId": "create_app",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "properties": {
+                      "attributes": {
+                        "properties": {
+                          "auto_deploy_branch": {
+                            "type": "string"
+                          },
+                          "auto_deploy_enabled": {
+                            "type": "boolean"
+                          },
+                          "container_port": {
+                            "type": "integer"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "full_name": {
+                            "description": "owner/repo",
+                            "type": "string"
+                          },
+                          "health_check_path": {
+                            "type": "string"
+                          },
+                          "health_check_port": {
+                            "type": "integer"
+                          },
+                          "health_check_type": {
+                            "enum": [
+                              "http",
+                              "tcp"
+                            ],
+                            "type": "string"
+                          },
+                          "integration_id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "repo_id": {
+                            "type": "integer"
+                          },
+                          "subdomain": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "subdomain"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "attributes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/app"
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The app"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "app"
+        ]
       }
     },
     "/api/v1/apps/{app_id}/builds": {
@@ -2084,7 +2199,8 @@
                                   "read",
                                   "deploy",
                                   "env:write",
-                                  "logs:read"
+                                  "logs:read",
+                                  "apps:write"
                                 ],
                                 "type": "string"
                               },
@@ -2133,6 +2249,106 @@
         },
         "tags": [
           "user"
+        ]
+      }
+    },
+    "/api/v1/repositories": {
+      "get": {
+        "callbacks": {},
+        "deprecated": false,
+        "description": "The GitHub repositories that your GitHub integrations reach, one per integration and repository. Needs the read scope. An app is created from one of them with POST /api/v1/apps.",
+        "operationId": "list_repositories",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "attributes": {
+                            "properties": {
+                              "clone_url": {
+                                "type": "string"
+                              },
+                              "default_branch": {
+                                "type": "string"
+                              },
+                              "full_name": {
+                                "type": "string"
+                              },
+                              "integration_id": {
+                                "type": "string"
+                              },
+                              "private": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "full_name",
+                              "clone_url",
+                              "default_branch",
+                              "private",
+                              "integration_id"
+                            ],
+                            "type": "object"
+                          },
+                          "id": {
+                            "description": "GitHub's id for the repository",
+                            "type": "string"
+                          },
+                          "links": {
+                            "type": "object"
+                          },
+                          "meta": {
+                            "type": "object"
+                          },
+                          "relationships": {
+                            "type": "object"
+                          },
+                          "type": {
+                            "enum": [
+                              "repository"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "id",
+                          "attributes"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "jsonapi": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The repositories"
+          },
+          "default": {
+            "$ref": "#/components/responses/errors"
+          }
+        },
+        "tags": [
+          "repository"
         ]
       }
     }
