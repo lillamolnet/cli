@@ -253,3 +253,76 @@ func TestDeployBadTimeout(t *testing.T) {
 func TestDeployErrors(t *testing.T) {
 	testAPIErrors(t, "deploy", "bakery")
 }
+
+// branchServer answers the app list, and a deploy with the branch it was sent:
+// 202 for feature/new-menu, and otherwise the 422 error code given.
+func branchServer(t *testing.T, errorCode string) (url string, sent *string) {
+	t.Helper()
+	var got string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.api+json")
+
+		switch {
+		case r.URL.Path == "/api/v1/apps":
+			_, _ = w.Write([]byte(fixture(t, "apps_for_status.json")))
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/apps/fdf37127-5906-4c4c-9005-4da8cf355adb/deploys":
+			var body struct {
+				Data struct {
+					Attributes struct {
+						Branch string `json:"branch"`
+					} `json:"attributes"`
+				} `json:"data"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			got = body.Data.Attributes.Branch
+
+			if got == "feature/new-menu" {
+				w.WriteHeader(202)
+				_, _ = w.Write([]byte(fixture(t, "deploy_started_branch.json")))
+				return
+			}
+			w.WriteHeader(422)
+			_, _ = w.Write([]byte(`{"errors":[{"status":"422","code":"` + errorCode + `","detail":"no"}]}`))
+		default:
+			w.WriteHeader(404)
+			_, _ = w.Write([]byte(`{"errors":[{"status":"404","code":"not_found","detail":"not found"}]}`))
+		}
+	}))
+	t.Cleanup(srv.Close)
+	return srv.URL, &got
+}
+
+func TestDeployBranch(t *testing.T) {
+	url, sent := branchServer(t, "branch_not_found")
+
+	code, stdout, stderr := runWithAPI(t, url, "deploy", "bakery", "--branch", "feature/new-menu")
+
+	if code != exitOK {
+		t.Fatalf("exit code = %d, stderr %q", code, stderr)
+	}
+	if *sent != "feature/new-menu" {
+		t.Errorf("sent branch = %q", *sent)
+	}
+	if !strings.Contains(stderr, "branch feature/new-menu") || !strings.Contains(stdout, queuedBuildID) {
+		t.Errorf("stdout = %q, stderr = %q", stdout, stderr)
+	}
+}
+
+func TestDeployBranchErrors(t *testing.T) {
+	for code, want := range map[string]string{
+		"branch_not_found": "the repository has no branch named nope",
+		"invalid_branch":   `"nope" is not a valid branch name`,
+	} {
+		url, _ := branchServer(t, code)
+
+		exit, stdout, stderr := runWithAPI(t, url, "deploy", "bakery", "--branch", "nope", "--wait")
+
+		if exit != exitUsage {
+			t.Errorf("%s: exit code = %d, want %d", code, exit, exitUsage)
+		}
+		if stdout != "" || !strings.Contains(stderr, want) {
+			t.Errorf("%s: stdout = %q, stderr = %q", code, stdout, stderr)
+		}
+	}
+}

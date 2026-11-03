@@ -49,7 +49,7 @@ it: `my-blog` for `https://my-blog.lillamolnet.se`. Its id or name works too.
 | `lillamolnet check [<app>]` | Checks that the repository in the current directory can be deployed, without deploying it. Without `<app>`, the app is found from the git remote. `--build` also builds and runs the image with Docker, and `--env-file` gives it env variables |
 | `lillamolnet builds <app>` | Lists an app's builds, newest first. `--limit` sets how many, at most 100 |
 | `lillamolnet build-logs <build>` | Prints a build's log. `<build>` is a build id, from `builds` or `status` |
-| `lillamolnet deploy <app> [--wait]` | Builds and deploys an app, like the Deploy button. `--wait` follows it to the end, for at most `--timeout` (default 30m) |
+| `lillamolnet deploy <app> [--wait]` | Builds and deploys an app, like the Deploy button. `--wait` follows it to the end, for at most `--timeout` (default 30m). `--branch` builds another branch. Without it, the auto deploy branch is built when auto deploy is on, and otherwise the default branch |
 | `lillamolnet logs <app>` | Prints an app's logs, oldest first. `--since` (default 1h, at most 168h), `--limit` (default 200, at most 1000), `--grep` and `--follow`. `--limit` keeps the newest lines, and `--grep` is case-sensitive and applied before it |
 | `lillamolnet env <app>` | Lists an app's environment variables by key. The values are never shown |
 | `lillamolnet env set <app> KEY=VALUE` | Sets a variable, or rotates a secret one. The value can also come on stdin. Takes effect at the next deploy |
@@ -406,6 +406,8 @@ Good to know:
   - Without a terminal, apps create, stop, env set and env unset need --yes.
     Give a secret on stdin: printf %s "$VALUE" | lillamolnet env set <app> KEY --yes
   - Env changes take effect at the next deploy.
+  - deploy --branch builds another branch. With auto deploy on, the next push
+    to the auto deploy branch replaces it.
   - Deploy, stop and env changes affect a live app, and apps create takes a
     subdomain. Ask the user first unless they asked for it.
 ```

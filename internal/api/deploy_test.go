@@ -2,8 +2,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -12,6 +15,7 @@ const queuedBuildID = "560b8ba0-8027-449f-b695-d5a4c13077bc"
 
 func TestDeployFixturesFollowSpec(t *testing.T) {
 	assertFollowsSpecFor(t, http.MethodPost, "/api/v1/apps/{id}/deploys", 202, readFixture(t, "deploy_started.json"))
+	assertFollowsSpecFor(t, http.MethodPost, "/api/v1/apps/{id}/deploys", 202, readFixture(t, "deploy_started_branch.json"))
 	assertFollowsSpecFor(t, http.MethodGet, "/api/v1/builds/{id}/wait", 200, readFixture(t, "wait_queued.json"))
 	assertFollowsSpecFor(t, http.MethodGet, "/api/v1/builds/{id}/wait", 200, readFixture(t, "wait_deployed.json"))
 }
@@ -19,7 +23,7 @@ func TestDeployFixturesFollowSpec(t *testing.T) {
 func TestStartDeploy(t *testing.T) {
 	client, req := server(t, 202, string(readFixture(t, "deploy_started.json")))
 
-	build, err := client.StartDeploy(context.Background(), "fdf37127-5906-4c4c-9005-4da8cf355adb")
+	build, err := client.StartDeploy(context.Background(), "fdf37127-5906-4c4c-9005-4da8cf355adb", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,10 +36,58 @@ func TestStartDeploy(t *testing.T) {
 	}
 }
 
+func TestStartDeploySendsNoBodyWithoutBranch(t *testing.T) {
+	var body []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ = io.ReadAll(r.Body)
+		w.WriteHeader(202)
+		_, _ = w.Write(readFixture(t, "deploy_started.json"))
+	}))
+	t.Cleanup(srv.Close)
+	client, _ := New(srv.URL, "key", "dev")
+
+	if _, err := client.StartDeploy(context.Background(), "x", ""); err != nil {
+		t.Fatal(err)
+	}
+	if len(body) != 0 {
+		t.Errorf("body = %s, want none", body)
+	}
+}
+
+func TestStartDeployWithBranch(t *testing.T) {
+	var contentType string
+	var sent map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		contentType = r.Header.Get("Content-Type")
+		body, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(body, &sent)
+		w.WriteHeader(202)
+		_, _ = w.Write(readFixture(t, "deploy_started_branch.json"))
+	}))
+	t.Cleanup(srv.Close)
+	client, _ := New(srv.URL, "key", "dev")
+
+	build, err := client.StartDeploy(context.Background(), "x", "feature/new-menu")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if contentType != mediaType {
+		t.Errorf("Content-Type = %q", contentType)
+	}
+	attrs := sent["data"].(map[string]any)["attributes"].(map[string]any)
+	if attrs["branch"] != "feature/new-menu" {
+		t.Errorf("attributes = %v", attrs)
+	}
+	if build.Branch != "feature/new-menu" {
+		t.Errorf("build = %+v", build)
+	}
+}
+
 func TestStartDeployAlreadyBuilding(t *testing.T) {
 	client, _ := server(t, 409, string(readFixture(t, "deploy_conflict.json")))
 
-	_, err := client.StartDeploy(context.Background(), "x")
+	_, err := client.StartDeploy(context.Background(), "x", "")
 
 	var already *AlreadyBuildingError
 	if !errors.As(err, &already) || already.BuildID != queuedBuildID {

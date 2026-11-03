@@ -64,5 +64,7 @@ Good to know:
   - Without a terminal, apps create, stop, env set and env unset need --yes.
     Give a secret on stdin: printf %s "$VALUE" | lillamolnet env set <app> KEY --yes
   - Env changes take effect at the next deploy.
+  - deploy --branch builds another branch. With auto deploy on, the next push
+    to the auto deploy branch replaces it.
   - Deploy, stop and env changes affect a live app, and apps create takes a
     subdomain. Ask the user first unless they asked for it.`

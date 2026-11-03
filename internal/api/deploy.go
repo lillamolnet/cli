@@ -34,11 +34,22 @@ type WaitResult struct {
 }
 
 // StartDeploy starts a build and a deploy of the app, and returns the queued
-// build. When a build is already queued or running, the error is an
+// build. With a branch, that branch is built. Without, the platform builds the
+// auto deploy branch when auto deploy is on, and otherwise the repository's
+// default branch. When a build is already queued or running, the error is an
 // *AlreadyBuildingError.
-func (c *Client) StartDeploy(ctx context.Context, appID string) (Build, error) {
+func (c *Client) StartDeploy(ctx context.Context, appID, branch string) (Build, error) {
+	r := request{method: http.MethodPost, path: []string{"apps", appID, "deploys"}}
+	if branch != "" {
+		body, err := json.Marshal(map[string]any{"data": map[string]any{"attributes": map[string]string{"branch": branch}}})
+		if err != nil {
+			return Build{}, err
+		}
+		r.body = body
+	}
+
 	var doc document[resource[buildAttributes], struct{}]
-	err := c.document(ctx, request{method: http.MethodPost, path: []string{"apps", appID, "deploys"}}, &doc)
+	err := c.document(ctx, r, &doc)
 
 	var apiErr *Error
 	if errors.As(err, &apiErr) && apiErr.Code == "already_building" {

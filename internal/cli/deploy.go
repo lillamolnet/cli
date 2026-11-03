@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/lillamolnet/cli/internal/api"
@@ -40,10 +41,12 @@ var waitRetryPause = 3 * time.Second
 func newDeployCommand(opts *options) *cobra.Command {
 	var wait bool
 	var timeout time.Duration
+	var branch string
 
 	cmd := &cobra.Command{
 		Use: "deploy <app>",
 		Example: "  lillamolnet deploy my-blog --wait\n" +
+			"  lillamolnet deploy my-blog --branch staging --wait\n" +
 			"  lillamolnet deploy my-blog --wait --timeout 10m --json",
 		Annotations: map[string]string{scopeAnnotation: "read,deploy"},
 		Short:       "Build and deploy an app",
@@ -51,7 +54,10 @@ func newDeployCommand(opts *options) *cobra.Command {
 			"Without --wait, deploy returns as soon as the build is queued. With --wait, it\n" +
 			"follows the build and the deploy to the end, prints progress on stderr, and\n" +
 			"exits with a code that says how it went.\n" +
-			"If a build of the app is already queued or running, no new one is started.",
+			"If a build of the app is already queued or running, no new one is started.\n\n" +
+			"Without --branch, deploy builds the auto deploy branch when auto deploy is on,\n" +
+			"and otherwise the repository's default branch. With auto deploy on, the next\n" +
+			"push to the auto deploy branch replaces a deploy of another branch.",
 		Args: exactlyOne("app"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if timeout <= 0 {
@@ -68,7 +74,10 @@ func newDeployCommand(opts *options) *cobra.Command {
 				return err
 			}
 
-			build, err := client.StartDeploy(cmd.Context(), app.ID)
+			build, err := client.StartDeploy(cmd.Context(), app.ID, branch)
+			if err := branchError(err, branch); err != nil {
+				return err
+			}
 			var already *api.AlreadyBuildingError
 			if errors.As(err, &already) {
 				return codeError{exitAlreadyBuilding, fmt.Sprintf(
@@ -79,7 +88,11 @@ func newDeployCommand(opts *options) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(opts.stderr, "Queued build %s of %s\n", build.ID, app.Subdomain)
+			if build.Branch != "" {
+				fmt.Fprintf(opts.stderr, "Queued build %s of %s, branch %s\n", build.ID, app.Subdomain, build.Branch)
+			} else {
+				fmt.Fprintf(opts.stderr, "Queued build %s of %s\n", build.ID, app.Subdomain)
+			}
 
 			result := api.WaitResult{Build: build, Result: api.ResultQueued}
 			timedOut := false
@@ -99,7 +112,25 @@ func newDeployCommand(opts *options) *cobra.Command {
 
 	cmd.Flags().BoolVar(&wait, "wait", false, "follow the build and the deploy to the end")
 	cmd.Flags().DurationVar(&timeout, "timeout", 30*time.Minute, "how long --wait waits, such as 10m")
+	cmd.Flags().StringVar(&branch, "branch", "", "the branch to build, such as staging")
 	return cmd
+}
+
+// branchError explains a branch the API would not build. Both are usage
+// errors: the build was never queued.
+func branchError(err error, branch string) error {
+	var apiErr *api.Error
+	if !errors.As(err, &apiErr) || apiErr.Status != http.StatusUnprocessableEntity {
+		return nil
+	}
+
+	switch apiErr.Code {
+	case "invalid_branch":
+		return usageError{fmt.Errorf("%q is not a valid branch name", branch)}
+	case "branch_not_found":
+		return usageError{fmt.Errorf("the repository has no branch named %s", branch)}
+	}
+	return nil
 }
 
 // waitForDeploy asks the API to wait until the build and its deploy are done,

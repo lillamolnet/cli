@@ -1363,7 +1363,7 @@
       "post": {
         "callbacks": {},
         "deprecated": false,
-        "description": "Start a build and a deploy of one of your apps. Needs the deploy scope, and read to find the app. When a build is already queued or running, the answer is 409 with its id in errors[0].meta.build_id.",
+        "description": "Start a build and a deploy of one of your apps. Needs the deploy scope, and read to find the app. When a build is already queued or running, the answer is 409 with its id in errors[0].meta.build_id. The body is optional. With a branch, that branch is built. Without, the auto deploy branch is built when auto deploy is on, and otherwise the repository's default branch. A branch name that is not valid is 422 invalid_branch, and one the repository does not have is 422 branch_not_found.",
         "operationId": "start_deploy",
         "parameters": [
           {
@@ -1376,6 +1376,32 @@
             "style": "simple"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "properties": {
+                      "attributes": {
+                        "properties": {
+                          "branch": {
+                            "description": "The branch to build, such as staging",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "202": {
             "content": {
