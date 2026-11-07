@@ -192,7 +192,9 @@ an app that has never been built.
     "trigger": "manual",
     "error_reason": "mix compile failed",
     "started_at": "2026-10-02T10:00:00Z",
-    "finished_at": "2026-10-02T10:01:00Z"
+    "finished_at": "2026-10-02T10:01:00Z",
+    "dispatch_attempts": 0,
+    "next_dispatch_at": null
   },
   "latest_deploy": {
     "id": "c1135c59-4ac0-4879-8343-849bdc008eac",
@@ -229,6 +231,15 @@ is left out.
 `builds --json` is an array of builds, in the same format as `latest_build` in
 `status --json`, newest first.
 
+A build is `pending` until the platform has sent it to the build server. If
+the build server does not answer, the platform tries again, up to 10 times
+over a few hours. `dispatch_attempts` is how many attempts have failed so far,
+`next_dispatch_at` when the next one is made, and `error_reason` the latest
+error. When the platform gives up, the build is `failed` with an `error_reason`
+that starts with `not_sent`, and it has no log. Deploy again to build the
+branch once more, or use **Try again** in the app's Deployments tab, which
+builds the same commit. `status` and `deploy --wait` say all of this in words.
+
 `build-logs --json` is `{"id": "<build id>", "log": "<the log>"}`. Without
 `--json`, the log is printed as it is.
 
@@ -239,7 +250,8 @@ rather than cut off.
 `deploy --json` has the app, its URL, the build, its latest deploy, and how it
 went. `result` is `queued`, `building` or `deploying` while it goes on, and
 `deployed`, `build_failed` or `deploy_failed` when `done` is true. Without
-`--wait`, `result` is `queued`.
+`--wait`, `result` is `queued`. A build that could not be sent to the build
+server is `build_failed`, with an `error_reason` that starts with `not_sent`.
 
 ```json
 {

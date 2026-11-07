@@ -18,6 +18,12 @@ type Build struct {
 	ErrorReason string
 	StartedAt   time.Time
 	FinishedAt  *time.Time
+	// DispatchAttempts is how many times the platform has failed to send a
+	// pending build to the build server, and NextDispatchAt when it tries
+	// again. A build that was never sent is failed, with an ErrorReason that
+	// starts with "not_sent".
+	DispatchAttempts int
+	NextDispatchAt   *time.Time
 }
 
 // Deploy is a deploy of a build.
@@ -41,13 +47,15 @@ type AppStatus struct {
 }
 
 type buildAttributes struct {
-	Status      string   `json:"status"`
-	Branch      *string  `json:"branch"`
-	RepoCommit  *string  `json:"repo_commit"`
-	TriggerType *string  `json:"trigger_type"`
-	ErrorReason *string  `json:"error_reason"`
-	StartedAt   apiTime  `json:"started_at"`
-	FinishedAt  *apiTime `json:"finished_at"`
+	Status           string   `json:"status"`
+	Branch           *string  `json:"branch"`
+	RepoCommit       *string  `json:"repo_commit"`
+	TriggerType      *string  `json:"trigger_type"`
+	ErrorReason      *string  `json:"error_reason"`
+	StartedAt        apiTime  `json:"started_at"`
+	FinishedAt       *apiTime `json:"finished_at"`
+	DispatchAttempts int      `json:"dispatch_attempts"`
+	NextDispatchAt   *apiTime `json:"next_dispatch_at"`
 }
 
 type deployAttributes struct {

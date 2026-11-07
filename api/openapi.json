@@ -226,12 +226,22 @@
                 "nullable": true,
                 "type": "string"
               },
+              "dispatch_attempts": {
+                "description": "Field included by default.",
+                "type": "integer"
+              },
               "error_reason": {
                 "description": "Field included by default.",
                 "nullable": true,
                 "type": "string"
               },
               "finished_at": {
+                "description": "Field included by default.",
+                "format": "date-time",
+                "nullable": true,
+                "type": "string"
+              },
+              "next_dispatch_at": {
                 "description": "Field included by default.",
                 "format": "date-time",
                 "nullable": true,
@@ -259,7 +269,8 @@
             },
             "required": [
               "status",
-              "started_at"
+              "started_at",
+              "dispatch_attempts"
             ],
             "type": "object"
           },
@@ -850,12 +861,12 @@
             "schema": {
               "additionalProperties": true,
               "example": {
-                "build": "status,started_at,finished_at,error_reason,repo_commit,trigger_type,branch"
+                "build": "status,started_at,finished_at,error_reason,repo_commit,trigger_type,branch,dispatch_attempts,next_dispatch_at"
               },
               "properties": {
                 "build": {
                   "description": "Comma separated field names for build",
-                  "example": "status,started_at,finished_at,error_reason,repo_commit,trigger_type,branch",
+                  "example": "status,started_at,finished_at,error_reason,repo_commit,trigger_type,branch,dispatch_attempts,next_dispatch_at",
                   "type": "string"
                 }
               },
@@ -1752,12 +1763,12 @@
             "schema": {
               "additionalProperties": true,
               "example": {
-                "build": "status,started_at,finished_at,error_reason,repo_commit,trigger_type,branch"
+                "build": "status,started_at,finished_at,error_reason,repo_commit,trigger_type,branch,dispatch_attempts,next_dispatch_at"
               },
               "properties": {
                 "build": {
                   "description": "Comma separated field names for build",
-                  "example": "status,started_at,finished_at,error_reason,repo_commit,trigger_type,branch",
+                  "example": "status,started_at,finished_at,error_reason,repo_commit,trigger_type,branch,dispatch_attempts,next_dispatch_at",
                   "type": "string"
                 }
               },

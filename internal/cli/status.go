@@ -30,6 +30,9 @@ type buildJSON struct {
 	ErrorReason *string    `json:"error_reason"`
 	StartedAt   time.Time  `json:"started_at"`
 	FinishedAt  *time.Time `json:"finished_at"`
+
+	DispatchAttempts int        `json:"dispatch_attempts"`
+	NextDispatchAt   *time.Time `json:"next_dispatch_at"`
 }
 
 type deployJSON struct {
@@ -137,8 +140,14 @@ func printStatus(out io.Writer, status api.AppStatus) error {
 
 	if b := status.LatestBuild; b != nil {
 		fmt.Fprintf(w, "Latest build:\t%s\n", describeBuild(b))
+		if line := describeDispatch(b); line != "" {
+			fmt.Fprintf(w, "\t%s\n", line)
+		}
 		if b.ErrorReason != "" {
-			fmt.Fprintf(w, "\t%s\n", b.ErrorReason)
+			fmt.Fprintf(w, "\t%s\n", sendError(b.ErrorReason))
+		}
+		if notSent(b) {
+			fmt.Fprintf(w, "\tDeploy again with: lillamolnet deploy %s\n", app.Subdomain)
 		}
 	} else {
 		fmt.Fprintf(w, "Latest build:\tnone\n")
@@ -196,6 +205,40 @@ func describeBuild(b *api.Build) string {
 	return strings.Join(parts, ", ")
 }
 
+// notSent reports whether the platform gave up sending the build to the build
+// server (control_plane 059).
+func notSent(b *api.Build) bool {
+	return b.Status == "failed" && strings.HasPrefix(b.ErrorReason, notSentPrefix)
+}
+
+const notSentPrefix = "not_sent"
+
+// describeDispatch says why a build has not reached the build server, or ""
+// when it has. Then the build's error reason is the latest failure.
+func describeDispatch(b *api.Build) string {
+	switch {
+	case b.Status == "pending" && b.DispatchAttempts == 0:
+		return "Waiting for the build server"
+	case b.Status == "pending":
+		line := "Waiting for the build server: " + plural(b.DispatchAttempts, "attempt", "attempts") + " failed"
+		if b.NextDispatchAt != nil {
+			line += ", next at " + b.NextDispatchAt.UTC().Format("15:04 UTC")
+		}
+		return line
+	case notSent(b):
+		return "Could not be sent to the build server, gave up after " +
+			plural(b.DispatchAttempts, "attempt", "attempts")
+	default:
+		return ""
+	}
+}
+
+// sendError is the error reason without the prefix that marks a build as
+// never sent.
+func sendError(reason string) string {
+	return strings.TrimPrefix(strings.TrimPrefix(reason, notSentPrefix), ": ")
+}
+
 func formatTime(t time.Time) string {
 	return t.UTC().Format("2006-01-02 15:04 UTC")
 }
@@ -213,6 +256,9 @@ func toBuildJSON(b *api.Build) *buildJSON {
 		ErrorReason: optional(b.ErrorReason),
 		StartedAt:   b.StartedAt,
 		FinishedAt:  b.FinishedAt,
+
+		DispatchAttempts: b.DispatchAttempts,
+		NextDispatchAt:   b.NextDispatchAt,
 	}
 }
 

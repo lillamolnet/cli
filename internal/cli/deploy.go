@@ -138,6 +138,7 @@ func branchError(err error, branch string) error {
 func waitForDeploy(ctx context.Context, client *api.Client, progress io.Writer, buildID string, timeout time.Duration) (api.WaitResult, bool, error) {
 	deadline := time.Now().Add(timeout)
 	last := api.ResultQueued
+	lastAttempts := 0
 	failures := 0
 
 	for {
@@ -159,6 +160,17 @@ func waitForDeploy(ctx context.Context, client *api.Client, progress io.Writer, 
 		if result.Result != last {
 			fmt.Fprintln(progress, progressLine(result))
 			last = result.Result
+		}
+		// A queued build that the platform has failed to send to the build
+		// server (control_plane 059). The wait answers when the result
+		// changes, so a new attempt shows at the latest after api.MaxWait.
+		if result.Build.Status == "pending" && result.Build.DispatchAttempts != lastAttempts {
+			line := describeDispatch(&result.Build)
+			if result.Build.ErrorReason != "" {
+				line += " (" + result.Build.ErrorReason + ")"
+			}
+			fmt.Fprintln(progress, line)
+			lastAttempts = result.Build.DispatchAttempts
 		}
 		if result.Done {
 			return result, false, nil
@@ -217,6 +229,11 @@ func printDeploy(opts *options, app api.App, r api.WaitResult) error {
 		_, err := fmt.Fprintln(opts.stdout, line)
 		return err
 	case api.ResultBuildFailed:
+		if notSent(&r.Build) {
+			_, err := fmt.Fprintf(opts.stdout, "Build %s: %s: %s. Deploy again with: lillamolnet deploy %s\n",
+				r.Build.ID, describeDispatch(&r.Build), sendError(r.Build.ErrorReason), app.Subdomain)
+			return err
+		}
 		_, err := fmt.Fprintf(opts.stdout, "Build %s failed%s. See its log: lillamolnet build-logs %s\n",
 			r.Build.ID, reason(r.Build.ErrorReason), r.Build.ID)
 		return err

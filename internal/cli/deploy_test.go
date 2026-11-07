@@ -172,6 +172,50 @@ func TestDeployWaitFailures(t *testing.T) {
 	}
 }
 
+// withDispatch sets the build's status, dispatch attempts and error reason in
+// a wait answer (control_plane 059).
+func withDispatch(t *testing.T, body, result, status string, attempts int, next any, errorReason string) string {
+	t.Helper()
+	var doc map[string]any
+	if err := json.Unmarshal([]byte(body), &doc); err != nil {
+		t.Fatal(err)
+	}
+	doc["meta"] = map[string]any{"done": result != "queued", "result": result}
+	attrs := doc["data"].(map[string]any)["attributes"].(map[string]any)
+	attrs["status"] = status
+	attrs["dispatch_attempts"] = attempts
+	attrs["next_dispatch_at"] = next
+	attrs["error_reason"] = errorReason
+	out, _ := json.Marshal(doc)
+	return string(out)
+}
+
+func TestDeployWaitBuildNotSent(t *testing.T) {
+	queued := fixture(t, "wait_queued.json")
+	url := deployServer(t, 202, []waitAnswer{
+		{200, withDispatch(t, queued, "queued", "pending", 0, nil, "")},
+		{200, withDispatch(t, queued, "queued", "pending", 3, "2026-11-07T14:05:00Z", "Build server returned status 503")},
+		{200, withDispatch(t, queued, "build_failed", "failed", 10, nil, "not_sent: Build server returned status 503")},
+	})
+
+	code, stdout, stderr := runWithAPI(t, url, "deploy", "bakery", "--wait")
+
+	if code != exitBuildFailed {
+		t.Errorf("exit code = %d, want %d (stderr %q)", code, exitBuildFailed, stderr)
+	}
+	if want := "Waiting for the build server: 3 attempts failed, next at 14:05 UTC (Build server returned status 503)\n"; !strings.Contains(stderr, want) {
+		t.Errorf("stderr has no %q: %q", want, stderr)
+	}
+	if strings.Count(stderr, "Waiting for the build server") != 1 {
+		t.Errorf("each new attempt is said once: %q", stderr)
+	}
+	want := "Build " + queuedBuildID + ": Could not be sent to the build server, gave up after 10 attempts: " +
+		"Build server returned status 503. Deploy again with: lillamolnet deploy bakery"
+	if strings.TrimSpace(stdout) != want {
+		t.Errorf("stdout = %q\nwant %q", stdout, want)
+	}
+}
+
 func TestDeployWaitTimeout(t *testing.T) {
 	url := deployServer(t, 202, []waitAnswer{{200, fixture(t, "wait_queued.json")}})
 

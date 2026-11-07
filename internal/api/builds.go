@@ -47,14 +47,16 @@ func (c *Client) BuildLog(ctx context.Context, id string) (string, error) {
 
 func toBuild(id string, a buildAttributes) Build {
 	return Build{
-		ID:          id,
-		Status:      a.Status,
-		Branch:      deref(a.Branch),
-		Commit:      deref(a.RepoCommit),
-		Trigger:     deref(a.TriggerType),
-		ErrorReason: deref(a.ErrorReason),
-		StartedAt:   a.StartedAt.Time,
-		FinishedAt:  timePtr(a.FinishedAt),
+		ID:               id,
+		Status:           a.Status,
+		Branch:           deref(a.Branch),
+		Commit:           deref(a.RepoCommit),
+		Trigger:          deref(a.TriggerType),
+		ErrorReason:      deref(a.ErrorReason),
+		StartedAt:        a.StartedAt.Time,
+		FinishedAt:       timePtr(a.FinishedAt),
+		DispatchAttempts: a.DispatchAttempts,
+		NextDispatchAt:   timePtr(a.NextDispatchAt),
 	}
 }
 

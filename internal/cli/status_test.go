@@ -1,9 +1,11 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/lillamolnet/cli/internal/api"
 )
@@ -80,6 +82,9 @@ func TestStatusJSON(t *testing.T) {
 		"error_reason": "mix compile failed",
 		"started_at":   "2026-10-02T10:00:00Z",
 		"finished_at":  "2026-10-02T10:01:00Z",
+
+		"dispatch_attempts": 0.0,
+		"next_dispatch_at":  nil,
 	}
 	if !jsonEqual(got.LatestBuild, wantBuild) {
 		t.Errorf("latest_build = %v\nwant %v", got.LatestBuild, wantBuild)
@@ -140,5 +145,56 @@ func TestDescribeSettings(t *testing.T) {
 		if got := describeLimits(s); got != want {
 			t.Errorf("describeLimits(%+v) = %q, want %q", s, got, want)
 		}
+	}
+}
+
+// control_plane 059: a push that has not reached the build server.
+func TestStatusBuildNotSent(t *testing.T) {
+	next := time.Date(2026, 11, 7, 14, 5, 0, 0, time.UTC)
+	cases := []struct {
+		build api.Build
+		want  []string
+	}{
+		{
+			api.Build{Status: "pending"},
+			[]string{"Waiting for the build server\n"},
+		},
+		{
+			api.Build{Status: "pending", DispatchAttempts: 3, NextDispatchAt: &next,
+				ErrorReason: "Build server returned status 503"},
+			[]string{
+				"Waiting for the build server: 3 attempts failed, next at 14:05 UTC\n",
+				"Build server returned status 503\n",
+			},
+		},
+		{
+			api.Build{Status: "failed", DispatchAttempts: 10,
+				ErrorReason: "not_sent: Build server returned status 503"},
+			[]string{
+				"Could not be sent to the build server, gave up after 10 attempts\n",
+				"  Build server returned status 503\n",
+				"Deploy again with: lillamolnet deploy bakery\n",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		var out bytes.Buffer
+		status := api.AppStatus{App: api.App{Name: "Bakery", Subdomain: "bakery"}, LatestBuild: &tc.build}
+		if err := printStatus(&out, status); err != nil {
+			t.Fatal(err)
+		}
+		for _, want := range tc.want {
+			if !strings.Contains(out.String(), want) {
+				t.Errorf("%+v: no %q in:\n%s", tc.build, want, out.String())
+			}
+		}
+	}
+
+	var out bytes.Buffer
+	failed := api.Build{Status: "failed", ErrorReason: "docker_build_failed"}
+	_ = printStatus(&out, api.AppStatus{App: api.App{Subdomain: "bakery"}, LatestBuild: &failed})
+	if strings.Contains(out.String(), "build server") || strings.Contains(out.String(), "Deploy again") {
+		t.Errorf("a build that failed on the build server is not a push that was never sent:\n%s", out.String())
 	}
 }

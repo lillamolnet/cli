@@ -3,8 +3,10 @@
     {
       "attributes": {
         "branch": "main",
+        "dispatch_attempts": 0,
         "error_reason": "mix compile failed",
         "finished_at": "2026-10-02T10:01:00Z",
+        "next_dispatch_at": null,
         "repo_commit": "def5678abc",
         "started_at": "2026-10-02T10:00:00Z",
         "status": "failed",
@@ -19,8 +21,10 @@
     {
       "attributes": {
         "branch": "main",
+        "dispatch_attempts": 0,
         "error_reason": null,
         "finished_at": "2026-10-01T10:03:00Z",
+        "next_dispatch_at": null,
         "repo_commit": "abc1234def",
         "started_at": "2026-10-01T10:00:00Z",
         "status": "success",

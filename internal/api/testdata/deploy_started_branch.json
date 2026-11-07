@@ -2,8 +2,10 @@
   "data": {
     "attributes": {
       "branch": "feature/new-menu",
+      "dispatch_attempts": 0,
       "error_reason": null,
       "finished_at": null,
+      "next_dispatch_at": null,
       "repo_commit": null,
       "started_at": "2026-10-10T07:18:47Z",
       "status": "queued",
